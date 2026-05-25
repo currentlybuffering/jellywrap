@@ -1,0 +1,13 @@
+{
+  "control_plane": "https://api.jellywrap.net",
+  "listen_port": 8080,
+  "external_ip": "YOUR_VPS_PUBLIC_IP",
+  "wg_port": 51820,
+  "wg_interface": "sv0",
+  "subnet": "10.77.0.0/24",
+  "peers": {},
+  "tokens": {
+    "sv-relay-token-change-me": "sv-relay-token-change-me"
+  },
+  "max_peers": 100
+}

@@ -1,0 +1,48 @@
+services:
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - MIGRATION_API_URL=http://migration-api:8080
+      - NEXT_TELEMETRY_DISABLED=1
+    depends_on:
+      - migration-api
+    restart: unless-stopped
+
+  migration-api:
+    build:
+      context: ./apps/migration-api
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - DATABASE_PATH=/data/migration.db
+      - ALLOWED_ORIGINS=http://localhost:3000
+      - JWT_SECRET=change-me-in-production
+    volumes:
+      - migration-data:/data
+    restart: unless-stopped
+
+  relay-agent:
+    build:
+      context: ./apps/relay-agent
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+      - "51820:51820/udp"
+    volumes:
+      - ./relay-config.json:/etc/jellywrap/relay.json
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv6.conf.all.forwarding=1
+    restart: unless-stopped
+
+volumes:
+  migration-data:

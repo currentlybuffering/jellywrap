@@ -1,0 +1,11 @@
+jellywrap.net {
+reverse_proxy web:3000
+}
+
+api.jellywrap.net {
+reverse_proxy migration-api:8080
+}
+
+relay.jellywrap.net {
+reverse_proxy relay-agent:8080
+}

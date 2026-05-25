@@ -1,0 +1,11 @@
+{
+  "name": "jellywrap",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/web",
+    "dev:api": "npm run dev --workspace=apps/migration-api",
+    "build": "npm run build --workspace=apps/web && npm run build --workspace=apps/migration-api",
+    "lint": "npm run lint --workspaces --if-present"
+  }
+}
