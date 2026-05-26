@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JellyWrap</title>
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #07080c; }
+    iframe { width: 100%; height: 100%; border: none; }
+    .loading { display: flex; align-items: center; justify-content: center; height: 100vh; color: #e8c547; font-family: system-ui, sans-serif; font-size: 1.2rem; }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading">Connecting to JellyWrap...</div>
+  <iframe id="app" style="display:none" src="https://jellywrap.net" onload="document.getElementById('loading').style.display='none';this.style.display='block'"></iframe>
+</body>
+</html>

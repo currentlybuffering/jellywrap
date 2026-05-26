@@ -122,6 +122,54 @@ export class JellyfinClient {
   async updateItemData(itemId: string, data: Record<string, any>): Promise<void> {
     await this.req(`/Items/${itemId}`, { method: 'POST', body: data })
   }
+
+  async getAllItems(parentId?: string): Promise<JellyfinItem[]> {
+    const all: JellyfinItem[] = []
+    let startIndex = 0
+    const batchSize = 200
+    while (true) {
+      const qs = [
+        `Recursive=true`,
+        `userId=${this.userId}`,
+        `Fields=ProviderIds,ProductionYear,Overview,MediaSources,MediaStreams,Path`,
+        `Limit=${batchSize}`,
+        `StartIndex=${startIndex}`,
+      ]
+      if (parentId) qs.push(`ParentId=${parentId}`)
+      const data = await this.req(`/Items?${qs.join('&')}`)
+      const items: JellyfinItem[] = data.Items || []
+      all.push(...items)
+      if (items.length < batchSize || all.length >= (data.TotalRecordCount || 0)) break
+      startIndex += batchSize
+    }
+    return all
+  }
+
+  async getLibraries() {
+    const data = await this.req(`/Users/${this.userId}/Views`)
+    return (data.Items || []) as { Id: string; Name: string; Type: string; CollectionType?: string }[]
+  }
+
+  async getItem(itemId: string): Promise<JellyfinItem & Record<string, any>> {
+    return this.req(`/Users/${this.userId}/Items/${itemId}?Fields=ProviderIds,ProductionYear,Overview,MediaSources,MediaStreams,Path`)
+  }
+
+  async getSeasons(seriesId: string): Promise<JellyfinItem[]> {
+    const data = await this.req(`/Shows/${seriesId}/Seasons?userId=${this.userId}&Fields=ProviderIds,ProductionYear`)
+    return data.Items || []
+  }
+
+  async getEpisodes(seriesId: string, seasonId: string): Promise<JellyfinItem[]> {
+    const data = await this.req(`/Shows/${seriesId}/Episodes?seasonId=${seasonId}&userId=${this.userId}&Fields=ProviderIds,ProductionYear,IndexNumber`)
+    return data.Items || []
+  }
+
+  async getRemoteSearch(providerName: string, info: Record<string, string>) {
+    return this.req(`/Items/RemoteSearch?ProviderName=${providerName}`, {
+      method: 'POST',
+      body: info,
+    })
+  }
 }
 
 export interface JellyfinItem {

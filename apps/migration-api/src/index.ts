@@ -3,6 +3,7 @@ import cors from 'cors'
 import helmet from 'helmet'
 import waitlistRouter from './routes/waitlist.js'
 import migrationsRouter from './routes/migrations.js'
+import smartLibraryRouter from './routes/smart-library.js'
 
 const app = express()
 const PORT = parseInt(process.env.PORT || '8080', 10)
@@ -15,11 +16,12 @@ app.use(cors({
 app.use(express.json({ limit: '1mb' }))
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', version: '0.1.0', uptime: process.uptime() })
+  res.json({ status: 'ok', version: '0.2.0', uptime: process.uptime() })
 })
 
 app.use('/waitlist', waitlistRouter)
 app.use('/migrations', migrationsRouter)
+app.use('/library', smartLibraryRouter)
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' })

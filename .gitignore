@@ -9,3 +9,5 @@ dist/
 *.pem
 .DS_Store
 .tgz
+src-tauri/target/
+apps/desktop/src-tauri/target/
