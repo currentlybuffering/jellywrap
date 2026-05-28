@@ -1,15 +1,15 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useVault } from '@/lib/store'
 import { JellyfinClient } from '@/lib/jellyfin'
+import JellyfinAuthForm from '@/components/jellyfin-auth-form'
 
 type ViewMode = 'auth' | 'browse' | 'detail' | 'player'
 
 export default function MediaPage() {
-  const [mode, setMode] = useState<ViewMode>('auth')
-  const [serverUrl, setServerUrl] = useState('')
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
+  const { connected, jellyfinUrl, jellyfinToken, jellyfinUserId, client: storedClient, initClient, setJellyfinAuth } = useVault()
+  const [mode, setMode] = useState<ViewMode>(connected ? 'browse' : 'auth')
   const [client, setClient] = useState<JellyfinClient | null>(null)
   const [libraries, setLibraries] = useState<any[]>([])
   const [currentLib, setCurrentLib] = useState<string>('')
@@ -23,6 +23,22 @@ export default function MediaPage() {
   const [loading, setLoading] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const progressRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    if (connected && jellyfinUrl && jellyfinToken && jellyfinUserId) {
+      const c = new JellyfinClient(jellyfinUrl, jellyfinToken, jellyfinUserId)
+      setClient(c)
+      setMode('browse')
+    c.getViews().then(views => {
+      setLibraries(views)
+      if (views.length > 0) {
+        setCurrentLib(views[0].Id)
+        loadLibrary(c, views[0].Id)
+      }
+    }).catch((err: any) => { setError(err.message || 'Could not load libraries') })
+      loadContinueWatching(c)
+    }
+  }, [connected, jellyfinUrl, jellyfinToken, jellyfinUserId])
 
   const loadLibrary = useCallback(async (c: JellyfinClient, parentId?: string) => {
     setLoading(true)
@@ -49,26 +65,6 @@ export default function MediaPage() {
   useEffect(() => {
     return () => { if (progressRef.current) clearInterval(progressRef.current) }
   }, [])
-
-  const handleLogin = async () => {
-    setError('')
-    if (!serverUrl || !username) { setError('Server URL and username required'); return }
-    try {
-      const c = new JellyfinClient(serverUrl)
-      await c.authenticate(username, password)
-      setClient(c)
-      const views = await c.getViews()
-      setLibraries(views)
-      setMode('browse')
-      await loadContinueWatching(c)
-      if (views.length > 0) {
-        setCurrentLib(views[0].Id)
-        await loadLibrary(c, views[0].Id)
-      }
-    } catch (err: any) {
-      setError(err.message)
-    }
-  }
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query)
@@ -129,35 +125,30 @@ export default function MediaPage() {
   const displayItems = searchQuery.length >= 2 ? searchResults : items
 
   return (
-    <main className="min-h-screen bg-vault-950">
-      {/* Auth */}
+    <main className="min-h-screen bg-vault-950 pt-14">
       {mode === 'auth' && (
         <div className="max-w-md mx-auto px-6 py-20">
-          <a href="/" className="text-sm text-zinc-500 hover:text-gold transition-colors mb-8 inline-block">
-            &larr; Back to home
-          </a>
           <h1 className="font-display text-3xl font-black mb-2">JellyWrap <span className="text-gold">Media</span></h1>
           <p className="text-zinc-500 mb-8">Connect to your Jellyfin server to browse and play your library.</p>
           {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm mb-6">{error}</div>}
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs text-zinc-500 uppercase tracking-widest mb-1 block">Server URL</label>
-              <input type="url" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} placeholder="http://192.168.1.100:8096" className="input-field" />
-            </div>
-            <div>
-              <label className="text-xs text-zinc-500 uppercase tracking-widest mb-1 block">Username</label>
-              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="admin" className="input-field" />
-            </div>
-            <div>
-              <label className="text-xs text-zinc-500 uppercase tracking-widest mb-1 block">Password</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="input-field" />
-            </div>
-            <button onClick={handleLogin} disabled={!serverUrl || !username} className="btn-gold w-full">Connect</button>
-          </div>
+              <JellyfinAuthForm onConnected={() => {
+                if (jellyfinUrl && jellyfinToken && jellyfinUserId) {
+                  const c = new JellyfinClient(jellyfinUrl, jellyfinToken, jellyfinUserId)
+                  setClient(c)
+                  setMode('browse')
+                  c.getViews().then(views => {
+                    setLibraries(views)
+                    if (views.length > 0) {
+                      setCurrentLib(views[0].Id)
+                      loadLibrary(c, views[0].Id)
+                    }
+                  }).catch(() => {})
+                  loadContinueWatching(c)
+                }
+              }} />
         </div>
       )}
 
-      {/* Browse */}
       {mode === 'browse' && client && (
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center justify-between mb-8">
@@ -170,11 +161,9 @@ export default function MediaPage() {
                 placeholder="Search library..."
                 className="input-field w-64"
               />
-              <button onClick={() => { setClient(null); setMode('auth') }} className="text-xs text-zinc-500 hover:text-red-400 transition-colors">Disconnect</button>
             </div>
           </div>
 
-          {/* Library tabs */}
           <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
             {libraries.map((lib) => (
               <button
@@ -189,7 +178,6 @@ export default function MediaPage() {
             ))}
           </div>
 
-          {/* Continue watching */}
           {continueWatching.length > 0 && !searchQuery && (
             <div className="mb-10">
               <h2 className="text-lg font-semibold mb-4">Continue Watching</h2>
@@ -208,9 +196,9 @@ export default function MediaPage() {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-zinc-600 text-2xl">▶</div>
+                        <div className="w-full h-full flex items-center justify-center text-zinc-600 text-2xl">&#9654;</div>
                       )}
-                      {item.UserData?.PlaybackPositionTicks > 0 && (
+                      {item.UserData?.PlaybackPositionTicks > 0 && item.RunTimeTicks > 0 && (
                         <div className="absolute bottom-0 left-0 right-0 h-1 bg-vault-700">
                           <div
                             className="h-full bg-gold"
@@ -227,7 +215,6 @@ export default function MediaPage() {
             </div>
           )}
 
-          {/* Items grid */}
           {loading ? (
             <div className="text-center text-zinc-500 py-20">Loading...</div>
           ) : (
@@ -249,13 +236,13 @@ export default function MediaPage() {
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-zinc-600">
                         <span className="text-3xl">
-                          {item.Type === 'Movie' ? '🎬' : item.Type === 'Series' ? '📺' : '🎵'}
+                          {item.Type === 'Movie' ? 'M' : item.Type === 'Series' ? 'TV' : 'M'}
                         </span>
                       </div>
                     )}
                     {item.UserData?.IsFolder === false && item.UserData?.Played && (
                       <div className="absolute top-2 right-2 w-5 h-5 bg-gold rounded-full flex items-center justify-center">
-                        <span className="text-vault-950 text-xs">✓</span>
+                        <span className="text-vault-950 text-xs">&#10003;</span>
                       </div>
                     )}
                   </div>
@@ -276,7 +263,6 @@ export default function MediaPage() {
         </div>
       )}
 
-      {/* Detail */}
       {mode === 'detail' && selectedItem && client && (
         <div className="max-w-4xl mx-auto px-6 py-8">
           <button onClick={() => setMode('browse')} className="text-sm text-zinc-500 hover:text-gold transition-colors mb-6 inline-block">
@@ -287,7 +273,7 @@ export default function MediaPage() {
               {selectedItem.ImageTags?.Primary ? (
                 <img src={client.imageUrl(selectedItem.Id, 'Primary', 600)} alt={selectedItem.Name} className="w-full rounded-lg" />
               ) : (
-                <div className="w-full aspect-[2/3] bg-vault-800 rounded-lg flex items-center justify-center text-zinc-600 text-4xl">🎬</div>
+                <div className="w-full aspect-[2/3] bg-vault-800 rounded-lg flex items-center justify-center text-zinc-600 text-4xl">M</div>
               )}
             </div>
             <div className="flex-1">
@@ -295,7 +281,7 @@ export default function MediaPage() {
               <div className="flex items-center gap-3 text-sm text-zinc-500 mb-4">
                 {selectedItem.ProductionYear && <span>{selectedItem.ProductionYear}</span>}
                 {selectedItem.OfficialRating && <span className="px-1.5 py-0.5 bg-vault-700 rounded text-xs">{selectedItem.OfficialRating}</span>}
-                {selectedItem.CommunityRating && <span>★ {selectedItem.CommunityRating.toFixed(1)}</span>}
+                {selectedItem.CommunityRating && <span>&#9733; {selectedItem.CommunityRating.toFixed(1)}</span>}
                 {selectedItem.RunTimeTicks && (
                   <span>{Math.round(selectedItem.RunTimeTicks / 600_000_000)} min</span>
                 )}
@@ -320,7 +306,6 @@ export default function MediaPage() {
                 </button>
               )}
 
-              {/* Media sources */}
               {selectedItem.MediaSources?.length > 0 && (
                 <div className="mt-6">
                   <h3 className="text-sm font-semibold mb-2">Available Versions</h3>
@@ -345,7 +330,6 @@ export default function MediaPage() {
         </div>
       )}
 
-      {/* Player */}
       {mode === 'player' && (
         <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
           <video
@@ -358,7 +342,7 @@ export default function MediaPage() {
             onClick={handleBackFromPlayer}
             className="absolute top-4 left-4 px-4 py-2 bg-black/60 text-white rounded-lg text-sm hover:bg-black/80 transition-colors"
           >
-            ← Back
+            &larr; Back
           </button>
         </div>
       )}

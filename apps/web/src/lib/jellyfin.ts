@@ -1,22 +1,33 @@
 export class JellyfinClient {
   private baseUrl: string
-  private token: string
-  private userId: string
+  private _token: string
+  private _userId: string
   private clientName = 'JellyWrap'
   private clientVersion = '0.1.0'
-  private deviceId = 'jellywrap-web'
+  private deviceId: string
 
-  constructor(baseUrl: string) {
+  constructor(baseUrl: string, token?: string, userId?: string) {
     this.baseUrl = baseUrl.replace(/\/+$/, '')
-    this.token = ''
-    this.userId = ''
+    this._token = token || ''
+    this._userId = userId || ''
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('jw-device-id')
+      if (stored) {
+        this.deviceId = stored
+      } else {
+        this.deviceId = 'jw-' + crypto.randomUUID()
+        localStorage.setItem('jw-device-id', this.deviceId)
+      }
+    } else {
+      this.deviceId = 'jw-ssr'
+    }
   }
 
   private headers(): Record<string, string> {
     return {
-      'X-Emby-Token': this.token,
+      'X-Emby-Token': this._token,
       'X-Emby-Authorization':
-        `MediaBrowser Client="${this.clientName}", Device="Web", DeviceId="${this.deviceId}", Version="${this.clientVersion}", Token="${this.token}"`,
+        `MediaBrowser Client="${this.clientName}", Device="Web", DeviceId="${this.deviceId}", Version="${this.clientVersion}", Token="${this._token}"`,
       'Content-Type': 'application/json',
     }
   }
@@ -27,8 +38,15 @@ export class JellyfinClient {
       headers: { ...this.headers(), ...(opts.headers as Record<string, string> || {}) },
     })
     if (!res.ok) {
-      const text = await res.text().catch(() => '')
-      throw new Error(`Jellyfin ${res.status}: ${text.slice(0, 200)}`)
+      const userMessages: Record<number, string> = {
+        401: 'Wrong username or password. Please check your credentials.',
+        403: 'You don\'t have permission to do this. Try logging in as an admin.',
+        404: 'The item you\'re looking for doesn\'t exist.',
+        500: 'The server had a problem. Try again in a moment.',
+        502: 'Can\'t reach the server. Check that it\'s running and the URL is correct.',
+        503: 'The server is temporarily unavailable. Try again shortly.',
+      }
+      throw new Error(userMessages[res.status] || `Something went wrong (error ${res.status}). Please try again.`)
     }
     return res.json()
   }
@@ -43,15 +61,19 @@ export class JellyfinClient {
       body: JSON.stringify({ Username: username, Pw: password }),
     })
     if (!res.ok) {
-      const text = await res.text().catch(() => '')
-      throw new Error(`Auth failed (${res.status}): ${text.slice(0, 200)}`)
+      const userMessages: Record<number, string> = {
+        401: 'Wrong username or password. Please check your credentials.',
+        403: 'You don\'t have permission to do this.',
+        404: 'Server not found. Check the URL and try again.',
+      }
+      throw new Error(userMessages[res.status] || `Could not connect to server. Check the URL and try again.`)
     }
     const data = await res.json()
-    this.token = data.AccessToken
-    this.userId = data.User?.Id || data.SessionInfo?.UserId || ''
-    if (!this.userId) {
+    this._token = data.AccessToken
+    this._userId = data.User?.Id || data.SessionInfo?.UserId || ''
+    if (!this._userId) {
       const user = await this.getCurrentUser()
-      this.userId = user.Id
+      this._userId = user.Id
     }
     return data
   }
@@ -61,13 +83,13 @@ export class JellyfinClient {
   }
 
   async getViews() {
-    const data = await this.req(`/Users/${this.userId}/Views`)
+    const data = await this.req(`/Users/${this._userId}/Views`)
     return data.Items || []
   }
 
   async getItems(params: Record<string, any> = {}) {
     const qs = new URLSearchParams({
-      userId: this.userId,
+      userId: this._userId,
       Recursive: 'true',
       Fields: 'Overview,Genres,Studios,CommunityRating,OfficialRating,RunTimeTicks,ProductionYear,ProviderIds,DateCreated,MediaSources,MediaStreams',
       ...params,
@@ -77,16 +99,16 @@ export class JellyfinClient {
   }
 
   async getContinueWatching() {
-    const data = await this.req(`/Users/${this.userId}/Items/Resume?Limit=20&MediaTypes=Video&Fields=MediaSources,MediaStreams`)
+    const data = await this.req(`/Users/${this._userId}/Items/Resume?Limit=20&MediaTypes=Video&Fields=MediaSources,MediaStreams`)
     return data.Items || []
   }
 
   async getItem(itemId: string) {
-    return this.req(`/Users/${this.userId}/Items/${itemId}`)
+    return this.req(`/Users/${this._userId}/Items/${itemId}`)
   }
 
   async search(query: string, limit = 20) {
-    const data = await this.req(`/Items?searchTerm=${encodeURIComponent(query)}&Limit=${limit}&userId=${this.userId}&Recursive=true`)
+    const data = await this.req(`/Items?searchTerm=${encodeURIComponent(query)}&Limit=${limit}&userId=${this._userId}&Recursive=true`)
     return data.Items || []
   }
 
@@ -95,13 +117,13 @@ export class JellyfinClient {
   }
 
   streamUrl(itemId: string, mediaSourceId?: string): string {
-    let url = `${this.baseUrl}/Videos/${itemId}/stream?static=true&api_key=${this.token}`
+    let url = `${this.baseUrl}/Videos/${itemId}/stream?static=true&api_key=${this._token}`
     if (mediaSourceId) url += `&MediaSourceId=${mediaSourceId}`
     return url
   }
 
   audioStreamUrl(itemId: string, mediaSourceId?: string): string {
-    let url = `${this.baseUrl}/Audio/${itemId}/stream?static=true&api_key=${this.token}`
+    let url = `${this.baseUrl}/Audio/${itemId}/stream?static=true&api_key=${this._token}`
     if (mediaSourceId) url += `&MediaSourceId=${mediaSourceId}`
     return url
   }
@@ -149,14 +171,14 @@ export class JellyfinClient {
 
   async setFavorite(itemId: string, isFavorite: boolean) {
     const method = isFavorite ? 'POST' : 'DELETE'
-    return this.req(`/Users/${this.userId}/FavoriteItems/${itemId}`, { method })
+    return this.req(`/Users/${this._userId}/FavoriteItems/${itemId}`, { method })
   }
 
   async setPlayed(itemId: string, isPlayed: boolean) {
     if (isPlayed) {
-      return this.req(`/Users/${this.userId}/PlayedItems/${itemId}`, { method: 'POST' })
+      return this.req(`/Users/${this._userId}/PlayedItems/${itemId}`, { method: 'POST' })
     } else {
-      return this.req(`/Users/${this.userId}/PlayedItems/${itemId}`, { method: 'DELETE' })
+      return this.req(`/Users/${this._userId}/PlayedItems/${itemId}`, { method: 'DELETE' })
     }
   }
 
@@ -168,10 +190,10 @@ export class JellyfinClient {
   }
 
   getAuthenticated() {
-    return !!this.token && !!this.userId
+    return !!this._token && !!this._userId
   }
 
-  getToken() { return this.token }
-  getUserId() { return this.userId }
+  getToken() { return this._token }
+  getUserId() { return this._userId }
   getBaseUrl() { return this.baseUrl }
 }

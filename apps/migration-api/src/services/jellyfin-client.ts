@@ -18,7 +18,7 @@ export class JellyfinClient {
     }
   }
 
-  private async req(path: string, opts: { method?: string; body?: any } = {}) {
+  async req(path: string, opts: { method?: string; body?: any } = {}) {
     const res = await fetch(`${this.baseUrl}${path}`, {
       method: opts.method || 'GET',
       headers: this.headers(),

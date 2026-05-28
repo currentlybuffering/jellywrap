@@ -1,10 +1,21 @@
 services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    ports:
+      - "8096:8096"
+    volumes:
+      - jellyfin-config:/config
+      - jellyfin-cache:/cache
+      - ./media:/media
+    restart: unless-stopped
+
   web:
     build:
       context: ./apps/web
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - MIGRATION_API_URL=http://migration-api:8080
       - NEXT_TELEMETRY_DISABLED=1
@@ -21,7 +32,7 @@ services:
     environment:
       - PORT=8080
       - DATABASE_PATH=/data/migration.db
-      - ALLOWED_ORIGINS=http://localhost:3000
+      - ALLOWED_ORIGINS=http://localhost:3001
       - JWT_SECRET=change-me-in-production
     volumes:
       - migration-data:/data
@@ -45,4 +56,6 @@ services:
     restart: unless-stopped
 
 volumes:
+  jellyfin-config:
+  jellyfin-cache:
   migration-data:

@@ -38,7 +38,7 @@ export const useVault = create<VaultState>()(
       client: null,
 
       setJellyfinAuth: (url, token, userId) => {
-        const client = get().client || new JellyfinClient(url)
+        const client = new JellyfinClient(url, token, userId)
         set({ jellyfinUrl: url, jellyfinToken: token, jellyfinUserId: userId, connected: true, client })
       },
       setPlexAuth: (url, token) => set({ plexUrl: url, plexToken: token }),
@@ -46,18 +46,22 @@ export const useVault = create<VaultState>()(
       setCurrentView: (v) => set({ currentView: v }),
       setPlaying: (item, name) => set({ playingItem: item, playerName: name || null }),
       initClient: (url) => {
-        const client = new JellyfinClient(url)
+        const { jellyfinToken, jellyfinUserId } = get()
+        const client = new JellyfinClient(url, jellyfinToken, jellyfinUserId)
         set({ client, jellyfinUrl: url })
         return client
       },
-      logout: () => set({
-        jellyfinToken: '',
-        jellyfinUserId: '',
-        connected: false,
-        client: null,
-        playingItem: null,
-        playerName: null,
-      }),
+    logout: () => set({
+      jellyfinUrl: '',
+      jellyfinToken: '',
+      jellyfinUserId: '',
+      plexUrl: '',
+      plexToken: '',
+      connected: false,
+      client: null,
+      playingItem: null,
+      playerName: null,
+    }),
     }),
     { name: 'jellywrap-store' }
   )

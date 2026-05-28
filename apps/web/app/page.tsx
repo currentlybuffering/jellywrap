@@ -1,19 +1,6 @@
 import WaitlistForm from './waitlist-form'
-
-const features = [
-  ['One-Click Migration', 'Move from Plex to Jellyfin — watch history, ratings, favorites, all matched by TMDB/TVDB/IMDB IDs'],
-  ['Better Browser UX', 'Poster walls, continue watching, instant search, detail views with real playback'],
-  ['Smart Library Tools', 'Duplicate detection, gap finding, subtitle hunting. Plex doesn\'t do any of this.'],
-  ['Watch Together', 'Sync playback with friends. No extra charge, no Plex Pass required.'],
-  ['Remote Access Relay', 'WireGuard tunnel to your home server. No port forwarding, no pain.'],
-  ['Family Controls', 'Per-user content restrictions and managed profiles. Always included.'],
-  ['Hardware Transcoding', 'GPU transcoding, free. Not locked behind a $750 paywall.'],
-  ['Live TV & DVR', 'Watch and record live over-the-air broadcasts.'],
-  ['Mobile Apps', 'iOS and Android apps with offline downloads.'],
-  ['Docker Deploy', 'One command to self-host. Full Docker Compose stack included.'],
-  ['Open Source (MIT)', 'Audit it, fork it, ship it. No vendor lock-in, ever.'],
-  ['Your Data, Period', 'No tracking, no analytics, no phone home. Your server, your rules.'],
-] as const
+import PlatformInstall from './platform-install'
+import { ArrowRight, Shield, Zap, Users, Tv, HardDrive, Globe, Check, Apple, Monitor, Terminal } from 'lucide-react'
 
 const comparisons = [
   ['Media streaming', 'Free', 'Free'],
@@ -23,19 +10,29 @@ const comparisons = [
   ['Mobile apps', '$4.99/mo or $750', 'Free'],
   ['Remote access', 'Plex Relay (paid)', 'JellyWrap Relay (free)'],
   ['Skip intros & credits', '$750 lifetime', 'Free'],
-  ['Plex migration tool', 'Doesn\'t exist', 'Built-in'],
+  ['Plex migration tool', "Doesn't exist", 'Built-in'],
   ['Duplicate detection', 'No', 'Yes'],
-  ['Watch together', 'No', 'Yes (coming)'],
+  ['Watch together', 'No', 'Yes'],
   ['Source code', 'Closed source', 'Open source (MIT)'],
   ['Data privacy', 'Tracks your history', 'You own everything'],
 ] as const
 
-const steps = [
-  ['1', 'Connect Plex', 'Enter your Plex URL and token'],
-  ['2', 'Connect Jellyfin', 'Point to your Jellyfin server'],
-  ['3', 'Pick data', 'Watch history, ratings, favorites'],
-  ['4', 'Migrate', 'Watch it transfer in real-time'],
-  ['5', 'Done', 'Everything intact. Zero data loss.'],
+const heroFeatures = [
+  {
+    icon: ArrowRight,
+    title: 'One-Click Plex Migration',
+    desc: 'Watch history, ratings, favorites — matched by TMDB/IMDB IDs. Zero data loss, zero effort.',
+  },
+  {
+    icon: Shield,
+    title: 'Your Data, Your Server',
+    desc: 'No tracking, no analytics, no phone home. Self-host on your hardware or let us run it.',
+  },
+  {
+    icon: Zap,
+    title: 'Everything Free, Self-Hosted',
+    desc: 'Transcoding, Live TV, mobile apps, remote access — no $750 paywall. Ever.',
+  },
 ] as const
 
 const plans = [
@@ -44,7 +41,7 @@ const plans = [
     price: '$0',
     period: 'forever',
     desc: 'Run it on your own hardware. Every feature, no limits.',
-    features: ['Full migration tool', 'Media browser', 'WireGuard relay', 'Smart library tools', 'Docker Compose deploy', 'Community support'],
+    features: ['Full migration tool', 'Media browser with playback', 'WireGuard relay', 'Smart library tools', 'Docker Compose deploy', 'Community support'],
     cta: 'View on GitHub',
     ctaHref: 'https://github.com/currentlybuffering/jellywrap',
     highlight: false,
@@ -71,120 +68,152 @@ const plans = [
   },
 ] as const
 
-const stats = [
-  ['100%', 'Open Source'],
-  ['$0', 'Self-Hosted'],
-  ['3-tier', 'Matching'],
-  ['0', 'Data Collected'],
+const trustBadges = [
+  ['MIT License', '100% open source'],
+  ['Self-Hosted', '$0, every feature'],
+  ['Built on Jellyfin', 'Battle-tested core'],
+  ['Zero Telemetry', 'No tracking, ever'],
+  ['Cross-Platform', 'Mac, Windows, Linux'],
 ] as const
 
 export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden">
       {/* ===== HERO ===== */}
-      <section className="relative min-h-[90vh] flex items-center">
+      <section className="relative min-h-[92vh] flex items-center">
         <div className="absolute inset-0 bg-gradient-to-br from-vault-950 via-vault-900 to-vault-950" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-gold/8 via-transparent to-transparent" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-gold/5 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.04]" />
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03]" />
 
         <div className="absolute top-20 right-[10%] w-72 h-72 bg-gold/5 rounded-full blur-[120px] animate-pulse-glow" />
         <div className="absolute bottom-20 left-[5%] w-96 h-96 bg-gold/3 rounded-full blur-[150px] animate-pulse-glow delay-1000" />
-        <div className="absolute top-[40%] left-[50%] w-48 h-48 bg-gold/4 rounded-full blur-[80px] animate-float-slow" />
 
-        <div className="relative max-w-6xl mx-auto px-6 py-32">
+        <div className="relative max-w-6xl mx-auto px-6 pt-28 pb-20">
           <div className="animate-fade-in-up">
-            <div className="flex items-center gap-3 mb-8">
-              <span className="px-3 py-1.5 text-xs font-mono uppercase tracking-widest bg-red-500/10 text-red-400 border border-red-500/20 rounded-full animate-pulse-glow">
-                Plex Lifetime &rarr; $750 on July 1
-              </span>
-              <span className="px-3 py-1.5 text-xs font-mono uppercase tracking-widest bg-gold/10 text-gold border border-gold/20 rounded-full">
-                Open Source
-              </span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 text-sm bg-red-500/10 text-red-400 border border-red-500/20 rounded-full">
+              <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+              Plex Lifetime jumping to $750 on July 1
             </div>
           </div>
 
-          <h1 className="font-display text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-[0.95] mb-8 animate-fade-in-up delay-200">
-            Your media.<br />
-            Your server.<br />
+          <h1 className="font-display text-5xl sm:text-7xl md:text-[5.5rem] font-black tracking-tight leading-[0.92] mb-6 max-w-4xl animate-fade-in-up delay-200">
+            Stop paying for your{' '}
             <span className="bg-gradient-to-r from-gold via-gold-bright to-gold bg-clip-text text-transparent">
-              Free forever.
+              own media.
             </span>
           </h1>
 
           <p className="text-lg sm:text-xl text-zinc-400 max-w-2xl mb-4 leading-relaxed animate-fade-in-up delay-300">
-            JellyWrap wraps Jellyfin with a migration tool, better UX, and smart library
-            features. Self-host for free, or let us run the server. Your media stays yours.
+            JellyWrap wraps Jellyfin with one-click Plex migration, a polished browser UX,
+            and smart library tools. Self-host for free, or let us run the server.
           </p>
           <p className="text-sm text-zinc-500 max-w-xl mb-10 animate-fade-in-up delay-400">
-            Built on <a href="https://jellyfin.org" className="text-zinc-400 underline underline-offset-2 hover:text-gold transition-colors">Jellyfin</a> &mdash;
-            the open-source media server. JellyWrap adds the polish Plex charges $750 for.
+            Built on{' '}
+            <a href="https://jellyfin.org" className="text-zinc-400 underline underline-offset-2 hover:text-gold transition-colors">
+              Jellyfin
+            </a>{' '}
+            — the open-source media server. JellyWrap adds everything Plex charges $750 for. Free and open source.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 mb-16 animate-fade-in-up delay-500">
-            <a href="#waitlist" className="btn-gold text-center text-lg px-8 py-4">
-              Get Early Access
+          <div className="flex flex-col sm:flex-row gap-4 mb-12 animate-fade-in-up delay-500">
+            <a href="/getting-started" className="btn-gold text-center text-lg px-8 py-4">
+              Get Started Free
             </a>
-            <a href="https://github.com/currentlybuffering/jellywrap" className="btn-outline text-center" target="_blank" rel="noopener">
-              View on GitHub &rarr;
+            <a href="/migrate" className="btn-outline text-center px-6 py-4">
+              Migrate from Plex
             </a>
           </div>
 
-          <div className="glass rounded-xl p-5 max-w-xl font-mono text-sm animate-fade-in-up delay-700">
+          <div className="glass rounded-xl p-5 max-w-lg animate-fade-in-up delay-700">
             <div className="text-zinc-500 mb-3 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              Self-host in 30 seconds
+              Self-host in 2 minutes — auto-detected for your OS
             </div>
-            <div className="text-zinc-300 space-y-1">
-              <div><span className="text-gold">$</span> git clone https://github.com/currentlybuffering/jellywrap.git</div>
-              <div><span className="text-gold">$</span> cd jellywrap <span className="text-zinc-600">&amp;&amp;</span> docker compose up --build</div>
-            </div>
+            <PlatformInstall />
           </div>
         </div>
       </section>
 
-      {/* ===== STATS BAR ===== */}
+      {/* ===== TRUST STRIP ===== */}
       <section className="relative border-y border-vault-700/50">
         <div className="absolute inset-0 bg-gradient-to-r from-vault-950 via-vault-900 to-vault-950" />
-        <div className="relative max-w-6xl mx-auto px-6 py-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {stats.map(([val, label], i) => (
-              <div key={label} className={`animate-fade-in-up delay-${(i + 1) * 100}`}>
-                <div className="text-3xl md:text-4xl font-black font-mono bg-gradient-to-b from-gold to-gold-dim bg-clip-text text-transparent">
-                  {val}
-                </div>
-                <div className="text-sm text-zinc-500 mt-1">{label}</div>
+        <div className="relative max-w-6xl mx-auto px-6 py-8">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 text-center">
+            {trustBadges.map(([title, sub], i) => (
+              <div key={title} className={`animate-fade-in-up delay-${(i + 1) * 100}`}>
+                <div className="text-sm font-semibold text-zinc-300">{title}</div>
+                <div className="text-xs text-zinc-500 mt-0.5">{sub}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ===== FEATURES ===== */}
+      {/* ===== PLATFORMS ===== */}
+      <section className="max-w-6xl mx-auto px-6 py-16">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-8">
+          {[
+            { icon: Apple, label: 'macOS', sub: 'Docker Desktop or Homebrew' },
+            { icon: Monitor, label: 'Windows', sub: 'Docker Desktop or WSL2' },
+            { icon: Terminal, label: 'Linux', sub: 'Docker or native install' },
+          ].map(({ icon: Icon, label, sub }) => (
+            <div key={label} className="flex items-center gap-3 px-6 py-4 rounded-xl border border-vault-700/50 bg-vault-900/50">
+              <Icon className="w-6 h-6 text-gold" />
+              <div>
+                <div className="font-semibold text-sm">{label}</div>
+                <div className="text-xs text-zinc-500">{sub}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-center text-xs text-zinc-600 mt-4">
+          Runs anywhere Docker does. Desktop apps for Mac and Windows coming soon.
+        </p>
+      </section>
+
+      {/* ===== PROBLEM / SOLUTION ===== */}
       <section className="max-w-6xl mx-auto px-6 py-24">
         <div className="text-center mb-16 animate-fade-in-up">
+          <p className="text-gold text-sm font-mono uppercase tracking-widest mb-4">The problem</p>
           <h2 className="font-display text-4xl md:text-5xl font-black mb-4">
-            What Plex paywalls &mdash; <span className="bg-gradient-to-r from-gold to-gold-bright bg-clip-text text-transparent">free and open</span>
+            Plex is holding your media hostage
           </h2>
-          <p className="text-zinc-500 max-w-xl mx-auto leading-relaxed">
-            Jellyfin with a polished layer on top: migration from Plex,
-            smarter library tools, social features, and a browser UX that
-            doesn&apos;t feel like it was designed in 2015.
+          <p className="text-zinc-500 max-w-2xl mx-auto leading-relaxed">
+            Hardware transcoding? $750. Mobile apps? $750. Live TV? $750. Remote access? Pay more.
+            Your watch history? Tracked and sold. Source code? Closed. Exit plan? None.
           </p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {features.map(([title, desc], i) => (
-            <div
-              key={title}
-              className={`card-glow animate-fade-in-up delay-${Math.min(i * 100, 700)}`}
-            >
-              <div className="flex items-center gap-2.5 mb-3">
-                <span className="w-2 h-2 rounded-full bg-gold shadow-[0_0_8px_rgba(232,197,71,0.4)]" />
-                <h3 className="font-semibold text-sm">{title}</h3>
+
+        <div className="grid md:grid-cols-3 gap-8 mb-16">
+          {heroFeatures.map(({ icon: Icon, title, desc }, i) => (
+            <div key={title} className={`animate-fade-in-up delay-${(i + 1) * 200}`}>
+              <div className="w-12 h-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center mb-5 shadow-[0_0_20px_rgba(232,197,71,0.1)]">
+                <Icon className="w-5 h-5 text-gold" />
               </div>
+              <h3 className="font-semibold text-lg mb-2">{title}</h3>
               <p className="text-sm text-zinc-500 leading-relaxed">{desc}</p>
             </div>
           ))}
+        </div>
+
+        <div className="glass rounded-2xl p-8 md:p-12 max-w-3xl mx-auto text-center animate-scale-in">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Tv className="w-5 h-5 text-gold" />
+            <HardDrive className="w-5 h-5 text-gold" />
+            <Globe className="w-5 h-5 text-gold" />
+            <Users className="w-5 h-5 text-gold" />
+          </div>
+          <h3 className="font-display text-2xl md:text-3xl font-bold mb-3">
+            Everything Plex paywalls — <span className="text-gold">free and open</span>
+          </h3>
+          <p className="text-zinc-500 leading-relaxed mb-6">
+            Transcoding, Live TV, mobile apps, remote relay, skip intros, Watch Together,
+            smart library tools, family controls. All included. All open source. All yours.
+          </p>
+          <a href="#compare" className="btn-outline inline-block">
+            See the full comparison
+          </a>
         </div>
       </section>
 
@@ -205,7 +234,9 @@ export default function Home() {
                   <th className="text-left py-4 px-6 text-zinc-500 font-medium">Feature</th>
                   <th className="text-center py-4 px-6 text-zinc-500 font-medium">Plex</th>
                   <th className="text-center py-4 px-6 font-medium">
-                    <span className="bg-gradient-to-r from-gold to-gold-bright bg-clip-text text-transparent">JellyWrap</span>
+                    <span className="bg-gradient-to-r from-gold to-gold-bright bg-clip-text text-transparent">
+                      JellyWrap
+                    </span>
                   </th>
                 </tr>
               </thead>
@@ -225,28 +256,42 @@ export default function Home() {
 
       {/* ===== MIGRATION ===== */}
       <section className="max-w-6xl mx-auto px-6 py-24">
-        <div className="text-center mb-16 animate-fade-in-up">
-          <h2 className="font-display text-4xl md:text-5xl font-black mb-4">
-            Leaving Plex? <span className="bg-gradient-to-r from-gold to-gold-bright bg-clip-text text-transparent">We make it easy.</span>
-          </h2>
-          <p className="text-zinc-500 max-w-xl mx-auto leading-relaxed">
-            3-tier matching by TMDB/TVDB/IMDB IDs, title+year, or fuzzy title.
-            Watch history, ratings, playlists &mdash; everything transfers.
-          </p>
-        </div>
-        <div className="grid sm:grid-cols-5 gap-6 max-w-3xl mx-auto">
-          {steps.map(([num, title, desc], i) => (
-            <div
-              key={num}
-              className={`text-center animate-fade-in-up delay-${(i + 1) * 100}`}
-            >
-              <div className="w-12 h-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center mx-auto mb-4 shadow-[0_0_20px_rgba(232,197,71,0.1)]">
-                <span className="text-gold font-bold font-mono text-lg">{num}</span>
+        <div className="grid md:grid-cols-2 gap-16 items-center">
+          <div className="animate-fade-in-up">
+            <p className="text-gold text-sm font-mono uppercase tracking-widest mb-4">Migration</p>
+            <h2 className="font-display text-4xl md:text-5xl font-black mb-4">
+              Leaving Plex?{' '}
+              <span className="bg-gradient-to-r from-gold to-gold-bright bg-clip-text text-transparent">
+                Three clicks.
+              </span>
+            </h2>
+            <p className="text-zinc-500 leading-relaxed mb-8">
+              3-tier matching by TMDB/TVDB/IMDB IDs, title+year, or fuzzy title.
+              Watch history, ratings, playlists — everything transfers.
+            </p>
+            <a href="/migrate" className="btn-gold inline-flex items-center gap-2">
+              Start migration
+              <ArrowRight className="w-4 h-4" />
+            </a>
+          </div>
+
+          <div className="space-y-6">
+            {[
+              { num: '1', title: 'Connect both servers', desc: 'Enter your Plex URL/token and Jellyfin URL' },
+              { num: '2', title: 'Pick what moves', desc: 'Watch history, ratings, favorites, playlists' },
+              { num: '3', title: 'Done', desc: 'Real-time transfer. Zero data loss.' },
+            ].map(({ num, title, desc }) => (
+              <div key={num} className="flex gap-5 animate-fade-in-up">
+                <div className="w-12 h-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(232,197,71,0.1)]">
+                  <span className="text-gold font-bold font-mono text-lg">{num}</span>
+                </div>
+                <div>
+                  <div className="font-semibold mb-1">{title}</div>
+                  <div className="text-sm text-zinc-500 leading-relaxed">{desc}</div>
+                </div>
               </div>
-              <div className="font-semibold text-sm mb-1.5">{title}</div>
-              <div className="text-xs text-zinc-500 leading-relaxed">{desc}</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
@@ -256,7 +301,10 @@ export default function Home() {
         <div className="relative max-w-6xl mx-auto px-6 py-24">
           <div className="text-center mb-16 animate-fade-in-up">
             <h2 className="font-display text-4xl md:text-5xl font-black mb-4">
-              Self-hosted or cloud &mdash; <span className="bg-gradient-to-r from-gold to-gold-bright bg-clip-text text-transparent">you pick</span>
+              Self-hosted or cloud —{' '}
+              <span className="bg-gradient-to-r from-gold to-gold-bright bg-clip-text text-transparent">
+                you pick
+              </span>
             </h2>
             <p className="text-zinc-500 max-w-xl mx-auto leading-relaxed">
               Self-hosted gets every feature for free. Cloud is for people who
@@ -291,7 +339,7 @@ export default function Home() {
                 <ul className="space-y-2.5 mb-8 flex-1">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-sm text-zinc-400">
-                      <span className="w-1.5 h-1.5 rounded-full bg-gold mt-1.5 shrink-0 shadow-[0_0_6px_rgba(232,197,71,0.4)]" />
+                      <Check className="w-4 h-4 text-gold mt-0.5 shrink-0" />
                       {f}
                     </li>
                   ))}
@@ -345,10 +393,12 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-6">
             <a href="https://github.com/currentlybuffering/jellywrap" className="hover:text-zinc-400 transition-colors" target="_blank" rel="noopener">GitHub</a>
-            <a href="https://jellywrap.net/migrate" className="hover:text-zinc-400 transition-colors">Migrate</a>
-            <a href="https://jellywrap.net/media" className="hover:text-zinc-400 transition-colors">Media</a>
-            <a href="https://jellywrap.net/library" className="hover:text-zinc-400 transition-colors">Smart Library</a>
-            <a href="https://jellywrap.net/#pricing" className="hover:text-zinc-400 transition-colors">Pricing</a>
+            <a href="/migrate" className="hover:text-zinc-400 transition-colors">Migrate</a>
+            <a href="/media" className="hover:text-zinc-400 transition-colors">Media</a>
+            <a href="/library" className="hover:text-zinc-400 transition-colors">Smart Library</a>
+            <a href="/watch" className="hover:text-zinc-400 transition-colors">Watch Together</a>
+            <a href="/family" className="hover:text-zinc-400 transition-colors">Family</a>
+            <a href="/#pricing" className="hover:text-zinc-400 transition-colors">Pricing</a>
           </div>
           <div>Open source under MIT. Not affiliated with Plex or Jellyfin.</div>
         </div>

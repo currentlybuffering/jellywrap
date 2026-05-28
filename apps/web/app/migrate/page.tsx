@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useVault } from '@/lib/store'
 
 type Step = 'connect' | 'options' | 'running' | 'done'
 type MigrationStatus = 'pending' | 'scanning' | 'matching' | 'migrating' | 'completed' | 'error' | 'cancelled'
@@ -27,10 +28,10 @@ interface MigrationItem {
 }
 
 export default function MigratePage() {
+  const { connected, jellyfinUrl: storedUrl, jellyfinToken: storedToken, jellyfinUserId: storedUserId, setPlexAuth, plexUrl: storedPlexUrl, plexToken: storedPlexToken } = useVault()
   const [step, setStep] = useState<Step>('connect')
-  const [plexUrl, setPlexUrl] = useState('')
-  const [plexToken, setPlexToken] = useState('')
-  const [jellyfinUrl, setJellyfinUrl] = useState('')
+  const [plexUrl, setPlexUrl] = useState(storedPlexUrl || '')
+  const [plexToken, setPlexToken] = useState(storedPlexToken || '')
   const [jellyfinUsername, setJellyfinUsername] = useState('')
   const [jellyfinPassword, setJellyfinPassword] = useState('')
   const [options, setOptions] = useState({ watchHistory: true, ratings: true })
@@ -38,6 +39,10 @@ export default function MigratePage() {
   const [items, setItems] = useState<MigrationItem[]>([])
   const [error, setError] = useState('')
   const [pollTimer, setPollTimer] = useState<NodeJS.Timeout | null>(null)
+
+  const jellyfinUrl = storedUrl
+  const jellyfinToken = storedToken
+  const jellyfinUserId = storedUserId
 
   const pollMigration = useCallback(async (id: string) => {
     try {
@@ -62,26 +67,25 @@ export default function MigratePage() {
   const startMigration = async () => {
     setError('')
     try {
+      setPlexAuth(plexUrl, plexToken)
       const res = await fetch('/api/migrations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plexUrl, plexToken, jellyfinUrl, jellyfinUsername, jellyfinPassword,
+          plexUrl, plexToken,
+          jellyfinUrl,
+          jellyfinUsername,
+          jellyfinPassword,
           options,
         }),
       })
       const data = await res.json()
-      if (!res.ok) {
-        setError(data.error || 'Migration failed to start')
-        return
-      }
+      if (!res.ok) { setError(data.error || 'Migration failed to start'); return }
       setMigration(data)
       setStep('running')
       const timer = setInterval(() => pollMigration(data.id), 2000)
       setPollTimer(timer)
-    } catch (err: any) {
-      setError(err.message)
-    }
+    } catch (err: any) { setError(err.message) }
   }
 
   const cancelMigration = async () => {
@@ -113,12 +117,13 @@ export default function MigratePage() {
     none: 'No match',
   }
 
+  const plexReady = plexUrl && plexToken
+  const jellyfinReady = connected && jellyfinUrl && jellyfinToken && jellyfinUserId
+  const needJellyfinCreds = connected && jellyfinToken ? false : (jellyfinUrl && jellyfinUsername)
+
   return (
-    <main className="min-h-screen bg-vault-950">
+    <main className="min-h-screen bg-vault-950 pt-14">
       <div className="max-w-3xl mx-auto px-6 py-20">
-        <a href="/" className="text-sm text-zinc-500 hover:text-gold transition-colors mb-8 inline-block">
-          &larr; Back to home
-        </a>
         <h1 className="font-display text-4xl font-black mb-2">
           Plex → JellyWrap <span className="text-gold">Migration</span>
         </h1>
@@ -126,13 +131,8 @@ export default function MigratePage() {
           Transfer your watch history, ratings, and playlists from Plex to Jellyfin. One click.
         </p>
 
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm mb-6">
-            {error}
-          </div>
-        )}
+        {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm mb-6">{error}</div>}
 
-        {/* Step: Connect */}
         {step === 'connect' && (
           <div className="space-y-8">
             <div className="card">
@@ -143,26 +143,12 @@ export default function MigratePage() {
               <div className="space-y-4">
                 <div>
                   <label className="text-xs text-zinc-500 uppercase tracking-widest mb-1 block">Plex URL</label>
-                  <input
-                    type="url"
-                    value={plexUrl}
-                    onChange={(e) => setPlexUrl(e.target.value)}
-                    placeholder="https://192.168.1.100:32400"
-                    className="input-field"
-                  />
+                  <input type="url" value={plexUrl} onChange={(e) => setPlexUrl(e.target.value)} placeholder="https://192.168.1.100:32400" className="input-field" />
                 </div>
                 <div>
                   <label className="text-xs text-zinc-500 uppercase tracking-widest mb-1 block">Plex Token</label>
-                  <input
-                    type="password"
-                    value={plexToken}
-                    onChange={(e) => setPlexToken(e.target.value)}
-                    placeholder="Find at /settings > security"
-                    className="input-field"
-                  />
-                  <p className="text-xs text-zinc-600 mt-1">
-                    We never store your Plex token. It&apos;s hashed and discarded after migration.
-                  </p>
+                  <input type="password" value={plexToken} onChange={(e) => setPlexToken(e.target.value)} placeholder="Find at /settings > security" className="input-field" />
+                  <p className="text-xs text-zinc-600 mt-1">We never store your Plex token. It&apos;s hashed and discarded after migration.</p>
                 </div>
               </div>
             </div>
@@ -172,38 +158,28 @@ export default function MigratePage() {
                 <span className="w-6 h-6 rounded bg-gold/10 text-gold text-xs flex items-center justify-center font-mono">2</span>
                 Connect Jellyfin / JellyWrap
               </h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs text-zinc-500 uppercase tracking-widest mb-1 block">Jellyfin URL</label>
-                  <input
-                    type="url"
-                    value={jellyfinUrl}
-                    onChange={(e) => setJellyfinUrl(e.target.value)}
-                    placeholder="http://192.168.1.100:8096"
-                    className="input-field"
-                  />
+              {connected ? (
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/5 border border-green-500/20">
+                  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                  <span className="text-sm text-green-400">Connected to {jellyfinUrl.replace(/^https?:\/\//, '')}</span>
                 </div>
-                <div>
-                  <label className="text-xs text-zinc-500 uppercase tracking-widest mb-1 block">Username</label>
-                  <input
-                    type="text"
-                    value={jellyfinUsername}
-                    onChange={(e) => setJellyfinUsername(e.target.value)}
-                    placeholder="admin"
-                    className="input-field"
-                  />
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs text-zinc-500 uppercase tracking-widest mb-1 block">Jellyfin URL</label>
+                    <input type="url" value={jellyfinUrl} onChange={() => {}} placeholder="http://192.168.1.100:8096" className="input-field opacity-60" readOnly />
+                    <p className="text-xs text-zinc-600 mt-1">Connect via any page first, or enter credentials below.</p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-zinc-500 uppercase tracking-widest mb-1 block">Username</label>
+                    <input type="text" value={jellyfinUsername} onChange={(e) => setJellyfinUsername(e.target.value)} placeholder="admin" className="input-field" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-zinc-500 uppercase tracking-widest mb-1 block">Password</label>
+                    <input type="password" value={jellyfinPassword} onChange={(e) => setJellyfinPassword(e.target.value)} placeholder="••••••••" className="input-field" />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-xs text-zinc-500 uppercase tracking-widest mb-1 block">Password</label>
-                  <input
-                    type="password"
-                    value={jellyfinPassword}
-                    onChange={(e) => setJellyfinPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="input-field"
-                  />
-                </div>
-              </div>
+              )}
             </div>
 
             <div className="card">
@@ -213,29 +189,19 @@ export default function MigratePage() {
               </h2>
               <div className="space-y-3">
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={options.watchHistory}
-                    onChange={(e) => setOptions((o) => ({ ...o, watchHistory: e.target.checked }))}
-                    className="w-4 h-4 accent-gold"
-                  />
+                  <input type="checkbox" checked={options.watchHistory} onChange={(e) => setOptions((o) => ({ ...o, watchHistory: e.target.checked }))} className="w-4 h-4 accent-gold" />
                   <span className="text-sm">Watch history & progress</span>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={options.ratings}
-                    onChange={(e) => setOptions((o) => ({ ...o, ratings: e.target.checked }))}
-                    className="w-4 h-4 accent-gold"
-                  />
+                  <input type="checkbox" checked={options.ratings} onChange={(e) => setOptions((o) => ({ ...o, ratings: e.target.checked }))} className="w-4 h-4 accent-gold" />
                   <span className="text-sm">Ratings & favorites</span>
                 </label>
               </div>
             </div>
 
             <button
-              onClick={() => { if (plexUrl && plexToken && jellyfinUrl && jellyfinUsername) { setStep('options') } }}
-              disabled={!plexUrl || !plexToken || !jellyfinUrl || !jellyfinUsername}
+              onClick={() => { if (plexReady && (jellyfinReady || needJellyfinCreds)) { setStep('options') } }}
+              disabled={!plexReady || (!jellyfinReady && !needJellyfinCreds)}
               className="btn-gold w-full"
             >
               Review & Start Migration
@@ -243,7 +209,6 @@ export default function MigratePage() {
           </div>
         )}
 
-        {/* Step: Confirm */}
         {step === 'options' && (
           <div className="space-y-6">
             <div className="card">
@@ -268,31 +233,21 @@ export default function MigratePage() {
               </div>
             </div>
             <div className="flex gap-4">
-              <button onClick={() => setStep('connect')} className="btn-outline flex-1">
-                Back
-              </button>
-              <button onClick={startMigration} className="btn-gold flex-1">
-                Start Migration
-              </button>
+              <button onClick={() => setStep('connect')} className="btn-outline flex-1">Back</button>
+              <button onClick={startMigration} className="btn-gold flex-1">Start Migration</button>
             </div>
           </div>
         )}
 
-        {/* Step: Running */}
         {step === 'running' && migration && (
           <div className="space-y-6">
             <div className="card">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold">{statusLabel[migration.status as MigrationStatus] || migration.status}</h2>
-                <button onClick={cancelMigration} className="text-xs text-red-400 hover:text-red-300">
-                  Cancel
-                </button>
+                <button onClick={cancelMigration} className="text-xs text-red-400 hover:text-red-300">Cancel</button>
               </div>
               <div className="w-full bg-vault-700 rounded-full h-3 mb-4">
-                <div
-                  className="bg-gold h-3 rounded-full transition-all duration-500"
-                  style={{ width: `${progress}%` }}
-                />
+                <div className="bg-gold h-3 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
               </div>
               <div className="grid grid-cols-3 gap-4 text-center text-sm">
                 <div>
@@ -312,7 +267,6 @@ export default function MigratePage() {
           </div>
         )}
 
-        {/* Step: Done */}
         {step === 'done' && migration && (
           <div className="space-y-6">
             <div className="card">
@@ -378,9 +332,7 @@ export default function MigratePage() {
                     </tbody>
                   </table>
                   {items.length > 200 && (
-                    <p className="text-xs text-zinc-600 text-center py-3">
-                      Showing 200 of {items.length} items
-                    </p>
+                    <p className="text-xs text-zinc-600 text-center py-3">Showing 200 of {items.length} items</p>
                   )}
                 </div>
               )}
@@ -392,9 +344,7 @@ export default function MigratePage() {
                 setStep('connect')
                 setMigration(null)
                 setItems([])
-              }} className="btn-gold flex-1">
-                New Migration
-              </button>
+              }} className="btn-gold flex-1">New Migration</button>
             </div>
           </div>
         )}

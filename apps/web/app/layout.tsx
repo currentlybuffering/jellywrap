@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import ClientLayout from '@/components/client-layout'
 
 export const metadata: Metadata = {
   title: 'JellyWrap — Your media. Your server. Free forever.',
@@ -22,7 +23,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      <body className="bg-vault-950 text-white font-body antialiased">{children}</body>
+      <body className="bg-vault-950 text-white font-body antialiased">
+        <ClientLayout>{children}</ClientLayout>
+      </body>
     </html>
   )
 }

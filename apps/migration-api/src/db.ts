@@ -59,4 +59,4 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_migration_items_status ON migration_items(migration_id, status);
 `)
 
-export default db
+export default db as Database.Database
