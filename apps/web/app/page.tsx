@@ -393,11 +393,9 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-6">
             <a href="https://github.com/currentlybuffering/jellywrap" className="hover:text-zinc-400 transition-colors" target="_blank" rel="noopener">GitHub</a>
+            <a href="/getting-started" className="hover:text-zinc-400 transition-colors">Getting Started</a>
             <a href="/migrate" className="hover:text-zinc-400 transition-colors">Migrate</a>
-            <a href="/media" className="hover:text-zinc-400 transition-colors">Media</a>
-            <a href="/library" className="hover:text-zinc-400 transition-colors">Smart Library</a>
-            <a href="/watch" className="hover:text-zinc-400 transition-colors">Watch Together</a>
-            <a href="/family" className="hover:text-zinc-400 transition-colors">Family</a>
+            <a href="/#compare" className="hover:text-zinc-400 transition-colors">Compare</a>
             <a href="/#pricing" className="hover:text-zinc-400 transition-colors">Pricing</a>
           </div>
           <div>Open source under MIT. Not affiliated with Plex or Jellyfin.</div>
