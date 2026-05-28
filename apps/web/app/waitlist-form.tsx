@@ -21,7 +21,7 @@ export default function WaitlistForm() {
   }
 
   return (
-    <form className="flex gap-3" onSubmit={handleSubmit}>
+    <form className="flex flex-col sm:flex-row gap-3" onSubmit={handleSubmit}>
       <input
         name="email"
         type="email"
@@ -30,7 +30,7 @@ export default function WaitlistForm() {
         className="input-field flex-1"
       />
       <button type="submit" className="btn-gold whitespace-nowrap">
-        Join
+        Join Waitlist
       </button>
     </form>
   )

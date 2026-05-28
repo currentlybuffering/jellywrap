@@ -32,9 +32,9 @@ export default function Navbar() {
   const links = isLanding ? landingLinks : appLinks
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-vault-950/90 backdrop-blur-lg border-b border-vault-700/50">
-      <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-vault-950/90 backdrop-blur-xl border-b border-vault-700/50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link href="/" className="font-display font-bold text-lg bg-gradient-to-r from-gold to-gold-dim bg-clip-text text-transparent">
             JellyWrap
           </Link>
@@ -69,7 +69,7 @@ export default function Navbar() {
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {connected && (
             <div className="hidden sm:flex items-center gap-2 text-xs text-zinc-500">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
@@ -79,7 +79,7 @@ export default function Navbar() {
           {connected && (
             <button
               onClick={logout}
-              className="text-xs text-zinc-500 hover:text-red-400 transition-colors"
+              className="hidden sm:block text-xs text-zinc-500 hover:text-red-400 transition-colors min-h-[44px]"
             >
               Disconnect
             </button>
@@ -95,7 +95,7 @@ export default function Navbar() {
 
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden p-2 text-zinc-400 hover:text-white"
+            className="md:hidden flex items-center justify-center w-10 h-10 text-zinc-400 hover:text-white rounded-lg hover:bg-vault-800/50 transition-colors"
             aria-label="Menu"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -110,28 +110,43 @@ export default function Navbar() {
       </div>
 
       {menuOpen && (
-        <div className="md:hidden border-t border-vault-700/50 bg-vault-950/95 backdrop-blur-lg">
-          {links.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
+        <div className="md:hidden border-t border-vault-700/50 bg-vault-950/98 backdrop-blur-xl animate-slide-down">
+          <div className="px-4 py-2">
+            {links.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setMenuOpen(false)}
+                className={`flex items-center min-h-[44px] px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                  pathname === href ? 'text-gold bg-gold/5' : 'text-zinc-400 hover:text-white hover:bg-vault-800/50'
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+            {connected && (
+              <button
+                onClick={() => { logout(); setMenuOpen(false) }}
+                className="flex items-center w-full min-h-[44px] px-3 py-2.5 rounded-lg text-sm text-red-400/80 hover:text-red-400 hover:bg-red-500/5 transition-colors"
+              >
+                Disconnect
+              </button>
+            )}
+            <a
+              href="https://github.com/currentlybuffering/jellywrap"
+              target="_blank"
+              rel="noopener"
+              className="flex items-center gap-2 min-h-[44px] px-3 py-2.5 rounded-lg text-sm text-zinc-400 hover:text-white hover:bg-vault-800/50 transition-colors"
               onClick={() => setMenuOpen(false)}
-              className={`block px-6 py-3 text-sm transition-colors ${
-                pathname === href ? 'text-gold bg-gold/5' : 'text-zinc-400 hover:text-white'
-              }`}
             >
-              {label}
-            </Link>
-          ))}
-          <a
-            href="https://github.com/currentlybuffering/jellywrap"
-            target="_blank"
-            rel="noopener"
-            className="block px-6 py-3 text-sm text-zinc-400 hover:text-white transition-colors"
-            onClick={() => setMenuOpen(false)}
-          >
-            GitHub
-          </a>
+              <Github className="w-4 h-4" />
+              GitHub
+            </a>
+            <div className="flex items-center gap-2 min-h-[44px] px-3 py-2.5 text-xs text-zinc-600">
+              <Shield className="w-3.5 h-3.5" />
+              Zero telemetry · MIT License
+            </div>
+          </div>
         </div>
       )}
     </nav>

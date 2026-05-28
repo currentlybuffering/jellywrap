@@ -52,7 +52,7 @@ function CopyBtn({ text }: { text: string }) {
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
       }}
-      className="text-zinc-600 hover:text-gold transition-colors"
+      className="text-zinc-600 hover:text-gold transition-colors shrink-0 min-w-[40px] text-right"
       aria-label="Copy"
     >
       {copied ? <span className="text-green-400 text-xs">copied</span> : <span className="text-xs">copy</span>}
@@ -81,7 +81,7 @@ export default function PlatformInstall() {
             <button
               key={key}
               onClick={() => setPlatform(key)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all min-h-[36px] ${
                 active
                   ? 'bg-gold/10 text-gold border border-gold/20'
                   : 'text-zinc-500 border border-vault-700 hover:border-zinc-600 hover:text-zinc-400'
@@ -100,24 +100,24 @@ export default function PlatformInstall() {
       <div className="space-y-3">
         <div className="relative group">
           <div className="text-[11px] text-zinc-600 font-mono mb-1">1. Install Docker</div>
-          <pre className="bg-vault-900 border border-vault-700 rounded-lg p-3 text-sm text-zinc-300 font-mono overflow-x-auto flex items-center justify-between">
-            <code>{info.dockerInstall}</code>
+          <pre className="bg-vault-900 border border-vault-700 rounded-lg p-2.5 sm:p-3 text-xs sm:text-sm text-zinc-300 font-mono overflow-x-auto flex items-center justify-between gap-2">
+            <code className="break-all sm:break-normal">{info.dockerInstall}</code>
             <CopyBtn text={info.dockerInstall} />
           </pre>
         </div>
 
         <div className="relative group">
           <div className="text-[11px] text-zinc-600 font-mono mb-1">2. Start Docker</div>
-          <pre className="bg-vault-900 border border-vault-700 rounded-lg p-3 text-sm text-zinc-300 font-mono overflow-x-auto flex items-center justify-between">
-            <code>{info.dockerCmd}</code>
+          <pre className="bg-vault-900 border border-vault-700 rounded-lg p-2.5 sm:p-3 text-xs sm:text-sm text-zinc-300 font-mono overflow-x-auto flex items-center justify-between gap-2">
+            <code className="break-all sm:break-normal">{info.dockerCmd}</code>
             <CopyBtn text={info.dockerCmd} />
           </pre>
         </div>
 
         <div className="relative group">
           <div className="text-[11px] text-zinc-600 font-mono mb-1">3. Clone &amp; run JellyWrap</div>
-          <pre className="bg-vault-900 border border-vault-700 rounded-lg p-3 text-sm text-zinc-300 font-mono overflow-x-auto flex items-center justify-between">
-            <code>{info.runCmd}</code>
+          <pre className="bg-vault-900 border border-vault-700 rounded-lg p-2.5 sm:p-3 text-xs sm:text-sm text-zinc-300 font-mono overflow-x-auto flex items-center justify-between gap-2">
+            <code className="break-all sm:break-normal">{info.runCmd}</code>
             <CopyBtn text={info.runCmd} />
           </pre>
         </div>
