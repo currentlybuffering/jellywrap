@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useVault } from '@/lib/store'
-import JellyfinAuthForm from '@/components/jellyfin-auth-form'
 import ItemPicker from '@/components/item-picker'
 
 interface PeerInfo {
@@ -41,6 +40,7 @@ export default function WatchPage() {
   const [inviteUrl, setInviteUrl] = useState('')
   const [error, setError] = useState('')
   const [inRoom, setInRoom] = useState(false)
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false)
 
   const wsRef = useRef<WebSocket | null>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -56,12 +56,16 @@ export default function WatchPage() {
         setIsPlaying(msg.state?.playing ?? false)
         setPositionTicks(msg.state?.positionTicks ?? 0)
         if (msg.roomName) setRoomName(msg.roomName)
+        setInRoom(true)
+        sessionStorage.setItem('jw-watch-name', myName)
         break
       case 'created':
         setMyPeerId(msg.peerId)
         setInviteUrl(msg.inviteUrl)
         setRoomId(msg.roomId)
         setInRoom(true)
+        sessionStorage.setItem('jw-watch-room', msg.roomId)
+        sessionStorage.setItem('jw-watch-name', myName)
         break
       case 'peer-joined':
         setPeers(prev => [...prev.filter(p => p.peerId !== msg.peerId), { peerId: msg.peerId, peerName: msg.peerName }])
@@ -74,7 +78,7 @@ export default function WatchPage() {
         setPositionTicks(msg.positionTicks)
         if (videoRef.current) {
           videoRef.current.currentTime = msg.positionTicks / 10000000
-          videoRef.current.play().catch(() => {})
+          videoRef.current.play().catch(() => { setAutoplayBlocked(true) })
         }
         break
       case 'pause':
@@ -115,13 +119,26 @@ export default function WatchPage() {
       try { handleWSMessage(JSON.parse(event.data)) } catch { /* ignore */ }
     }
 
-    ws.onclose = () => { setError('Disconnected from room') }
+    ws.onclose = () => {
+      setError('Disconnected from room')
+      sessionStorage.removeItem('jw-watch-room')
+    }
     return ws
   }, [API_BASE, handleWSMessage, myName])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatMessages])
+
+  useEffect(() => {
+    if (!connected) return
+    const savedRoom = sessionStorage.getItem('jw-watch-room')
+    const savedName = sessionStorage.getItem('jw-watch-name')
+    if (savedRoom && savedName && !inRoom) {
+      setDisplayName(savedName)
+      setRoomId(savedRoom)
+    }
+  }, [connected])
 
   const createRoom = () => {
     if (!itemId) return
@@ -183,16 +200,19 @@ export default function WatchPage() {
     : ''
 
   return (
-    <main className="min-h-screen bg-vault-950 pt-14">
-      <div className="max-w-6xl mx-auto px-6 py-20">
-        <h1 className="font-display text-4xl font-black mb-2">Watch <span className="text-gold">Together</span></h1>
-        <p className="text-zinc-500 mb-10">Sync playback with friends. No Plex Pass required.</p>
+    <div className="p-4 sm:p-6 lg:p-8">
+      <h1 className="font-display text-2xl sm:text-3xl font-black mb-1">Watch <span className="text-gold">Together</span></h1>
+      <p className="text-sm text-zinc-500 mb-6">Sync playback with friends. No Plex Pass required.</p>
 
         {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm mb-6">{error}</div>}
 
-        {!connected && <JellyfinAuthForm />}
+    {!connected && (
+      <div className="text-center py-16 text-zinc-500">
+        Connect to Jellyfin first using the sidebar.
+      </div>
+    )}
 
-        {connected && !inRoom && (
+    {connected && !inRoom && (
           <div className="grid md:grid-cols-2 gap-6">
             <div className="card-glow">
               <h2 className="font-semibold text-lg mb-4">Create a Room</h2>
@@ -234,21 +254,39 @@ export default function WatchPage() {
         {connected && inRoom && (
           <div className="grid lg:grid-cols-[1fr_320px] gap-6">
             <div className="space-y-4">
-              <div className="relative bg-black rounded-xl overflow-hidden aspect-video">
-                {videoSrc ? (
-                  <video
-                    ref={videoRef}
-                    src={videoSrc}
-                    className="w-full h-full"
-                    onPlay={() => { if (!isPlaying) sendPlay() }}
-                    onPause={() => { if (isPlaying) sendPause() }}
-                    onSeeked={() => {
+          <div className="relative bg-black rounded-xl overflow-hidden aspect-video">
+            {videoSrc ? (
+              <>
+                <video
+                  ref={videoRef}
+                  src={videoSrc}
+                  className="w-full h-full"
+                  onPlay={() => { setAutoplayBlocked(false); if (!isPlaying) sendPlay() }}
+                  onPause={() => { if (isPlaying) sendPause() }}
+                  onSeeked={() => {
+                    if (videoRef.current) {
+                      sendSeek(Math.floor(videoRef.current.currentTime * 10000000))
+                    }
+                  }}
+                />
+                {autoplayBlocked && (
+                  <button
+                    onClick={() => {
                       if (videoRef.current) {
-                        sendSeek(Math.floor(videoRef.current.currentTime * 10000000))
+                        videoRef.current.play().then(() => setAutoplayBlocked(false)).catch(() => {})
                       }
                     }}
-                  />
-                ) : (
+                    className="absolute inset-0 flex items-center justify-center bg-black/70 cursor-pointer"
+                  >
+                    <div className="text-center">
+                      <div className="text-6xl mb-3 text-gold">&#x25B6;</div>
+                      <p className="text-zinc-300 font-medium">Click to Play</p>
+                      <p className="text-xs text-zinc-500 mt-1">Browser blocked autoplay</p>
+                    </div>
+                  </button>
+                )}
+              </>
+            ) : (
                   <div className="flex items-center justify-center h-full text-zinc-600">
                     <div className="text-center">
                       <div className="text-5xl mb-3">&#x25B6;</div>
@@ -325,7 +363,6 @@ export default function WatchPage() {
             </div>
           </div>
         )}
-      </div>
-    </main>
+  </div>
   )
 }

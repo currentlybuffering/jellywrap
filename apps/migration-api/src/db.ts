@@ -57,6 +57,25 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_migration_items_mid ON migration_items(migration_id);
   CREATE INDEX IF NOT EXISTS idx_migration_items_status ON migration_items(migration_id, status);
-`)
+
+  CREATE TABLE IF NOT EXISTS cloud_servers (
+    id TEXT PRIMARY KEY,
+    email TEXT NOT NULL,
+    tier TEXT NOT NULL CHECK(tier IN ('cloud', 'cloud_plus')),
+    status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'provisioning', 'active', 'suspended', 'terminated')),
+    jellyfin_url TEXT,
+    admin_token TEXT,
+    stripe_customer_id TEXT,
+    stripe_subscription_id TEXT,
+    port INTEGER,
+    storage_gb INTEGER DEFAULT 50,
+    custom_domain TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_cloud_servers_email ON cloud_servers(email);
+  CREATE INDEX IF NOT EXISTS idx_cloud_servers_status ON cloud_servers(status);
+  `)
 
 export default db as Database.Database

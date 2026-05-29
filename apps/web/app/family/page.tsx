@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useVault } from '@/lib/store'
-import JellyfinAuthForm from '@/components/jellyfin-auth-form'
 
 interface FamilyUser {
   id: string
@@ -88,17 +87,13 @@ export default function FamilyPage() {
   }, [connected])
 
   return (
-    <main className="min-h-screen bg-vault-950 pt-14">
-      <div className="max-w-4xl mx-auto px-6 py-20">
-        <h1 className="font-display text-4xl font-black mb-2">Family <span className="text-gold">Controls</span></h1>
-        <p className="text-zinc-500 mb-10">Manage users, set restrictions, and control access. Plex charges extra for this.</p>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl">
+      <h1 className="font-display text-2xl sm:text-3xl font-black mb-1">Family <span className="text-gold">Controls</span></h1>
+      <p className="text-sm text-zinc-500 mb-6">Manage users, set restrictions, and control access. Plex charges extra for this.</p>
 
-        {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm mb-6">{error}</div>}
+  {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm mb-6">{error}</div>}
 
-        {!connected && <JellyfinAuthForm />}
-
-        {connected && (
-          <div className="space-y-6">
+  <div className="space-y-6">
             <div className="card-glow">
               <h2 className="font-semibold text-lg mb-4">Add Family Member</h2>
               <div className="flex gap-3">
@@ -187,9 +182,7 @@ export default function FamilyPage() {
             {loaded && users.length === 0 && !loading && (
               <div className="text-center text-zinc-600 py-16">No users found</div>
             )}
-          </div>
-        )}
-      </div>
-    </main>
+  </div>
+</div>
   )
 }

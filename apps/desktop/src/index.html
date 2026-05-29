@@ -5,13 +5,150 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>JellyWrap</title>
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #07080c; }
-    iframe { width: 100%; height: 100%; border: none; }
-    .loading { display: flex; align-items: center; justify-content: center; height: 100vh; color: #e8c547; font-family: system-ui, sans-serif; font-size: 1.2rem; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { height: 100vh; overflow: hidden; background: #07080c; color: #e4e4e7; font-family: system-ui, -apple-system, sans-serif; }
+
+    .loading-screen {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 100vh; gap: 16px; padding: 24px;
+    }
+    .loading-screen h1 {
+      font-size: 2rem; font-weight: 800;
+      background: linear-gradient(to right, #e8c547, #b8942e);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .loading-screen p { color: #71717a; font-size: 0.875rem; }
+    .spinner {
+      width: 32px; height: 32px; border: 3px solid #27272a; border-top-color: #e8c547;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .connect-screen {
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      height: 100vh; gap: 20px; padding: 24px;
+    }
+    .connect-screen.active { display: flex; }
+    .connect-screen h1 {
+      font-size: 1.75rem; font-weight: 800;
+      background: linear-gradient(to right, #e8c547, #b8942e);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .connect-screen p { color: #71717a; font-size: 0.875rem; text-align: center; max-width: 360px; }
+    .connect-form { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 380px; }
+    .connect-form label { font-size: 0.75rem; color: #a1a1aa; font-weight: 500; }
+    .connect-form input {
+      width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 0.875rem;
+      background: #18181b; border: 1px solid #27272a; color: #e4e4e7; outline: none;
+      transition: border-color 0.15s;
+    }
+    .connect-form input:focus { border-color: #e8c547; }
+    .connect-form button {
+      padding: 12px; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; min-height: 44px;
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, #e8c547, #b8942e); color: #07080c;
+    }
+    .btn-gold:hover { filter: brightness(1.1); }
+    .btn-gold:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-outline {
+      background: transparent; color: #a1a1aa; border: 1px solid #27272a;
+    }
+    .btn-outline:hover { border-color: #3f3f46; color: #e4e4e7; }
+    .error-msg { color: #f87171; font-size: 0.75rem; text-align: center; }
+    .demo-link {
+      color: #b8942e; font-size: 0.8rem; text-decoration: none; cursor: pointer;
+      transition: color 0.15s;
+    }
+    .demo-link:hover { color: #e8c547; }
+
+    #app-frame { display: none; width: 100%; height: 100%; border: none; position: absolute; top: 0; left: 0; }
+    #app-frame.active { display: block; }
   </style>
 </head>
 <body>
-  <div id="loading" class="loading">Connecting to JellyWrap...</div>
-  <iframe id="app" style="display:none" src="https://jellywrap.net" onload="document.getElementById('loading').style.display='none';this.style.display='block'"></iframe>
+  <div id="loading-screen" class="loading-screen">
+    <h1>JellyWrap</h1>
+    <div class="spinner"></div>
+    <p>Starting up...</p>
+  </div>
+
+  <div id="connect-screen" class="connect-screen">
+    <h1>JellyWrap</h1>
+    <p>Connect to your Jellyfin server to get started. Self-hosted or cloud — either works.</p>
+    <form id="connect-form" class="connect-form">
+      <div>
+        <label for="server-url">Server URL</label>
+        <input id="server-url" type="url" placeholder="http://192.168.1.100:8096" required autocomplete="url" />
+      </div>
+      <div id="error-msg" class="error-msg" style="display:none"></div>
+      <button type="submit" class="btn-gold">Connect</button>
+      <button type="button" id="demo-btn" class="btn-outline">Try demo server</button>
+    </form>
+  </div>
+
+  <iframe id="app-frame" allow="autoplay; fullscreen; encrypted-media" allowfullscreen></iframe>
+
+  <script>
+    const DEMO_URL = 'https://demo.jellyfin.org/stable';
+    const STORAGE_KEY = 'jw-desktop-server';
+
+    const loadingScreen = document.getElementById('loading-screen');
+    const connectScreen = document.getElementById('connect-screen');
+    const appFrame = document.getElementById('app-frame');
+    const connectForm = document.getElementById('connect-form');
+    const serverInput = document.getElementById('server-url');
+    const errorMsg = document.getElementById('error-msg');
+    const demoBtn = document.getElementById('demo-btn');
+
+    function showConnect() {
+      loadingScreen.style.display = 'none';
+      connectScreen.classList.add('active');
+      appFrame.classList.remove('active');
+    }
+
+    function connectToServer(url) {
+      try {
+        localStorage.setItem(STORAGE_KEY, url);
+      } catch {}
+      loadingScreen.style.display = 'flex';
+      connectScreen.classList.remove('active');
+      appFrame.classList.remove('active');
+
+      appFrame.src = url;
+      appFrame.onload = () => {
+        loadingScreen.style.display = 'none';
+        appFrame.classList.add('active');
+      };
+      appFrame.onerror = () => {
+        showConnect();
+        errorMsg.textContent = 'Could not reach server. Check the URL and try again.';
+        errorMsg.style.display = 'block';
+      };
+    }
+
+    connectForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const url = serverInput.value.trim().replace(/\/+$/, '');
+      if (!url) return;
+      errorMsg.style.display = 'none';
+      connectToServer(url);
+    });
+
+    demoBtn.addEventListener('click', () => {
+      serverInput.value = DEMO_URL;
+      connectToServer(DEMO_URL);
+    });
+
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      connectToServer(saved);
+    } else {
+      showConnect();
+    }
+  </script>
 </body>
 </html>

@@ -69,6 +69,16 @@
     from { opacity: 0; transform: translateY(-8px); }
     to { opacity: 1; transform: translateY(0); }
   }
+
+  @keyframes slide-in-left {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
 }
 
 @layer components {
@@ -119,6 +129,14 @@
 
   .animate-slide-down {
     animation: slide-down 0.25s ease-out both;
+  }
+
+  .animate-slide-in-left {
+    animation: slide-in-left 0.2s ease-out both;
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
   }
 
   .animate-float {

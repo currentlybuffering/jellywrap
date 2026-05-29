@@ -40,6 +40,10 @@ router.post('/subtitles/:itemId', async (req, res) => {
   try {
     const { client } = makeClient(req)
     const { itemId } = req.params
+    if (!process.env.OPENSUBTITLES_API_KEY) {
+      res.json({ subtitles: [], count: 0, warning: 'OPENSUBTITLES_API_KEY not configured. Subtitle search is unavailable.' })
+      return
+    }
     const results = await findSubtitles(client, itemId)
     res.json({ subtitles: results, count: results.length })
   } catch (err: any) {
@@ -51,6 +55,10 @@ router.post('/gaps', async (req, res) => {
   try {
     const { client } = makeClient(req)
     const { libraryId } = req.body
+    if (!process.env.TMDB_API_KEY) {
+      res.json({ gaps: [], count: 0, totalMissing: 0, warning: 'TMDB_API_KEY not configured. Gap finder is unavailable.' })
+      return
+    }
     const gaps = await findGaps(client, libraryId)
     res.json({ gaps, count: gaps.length, totalMissing: gaps.reduce((s, g) => s + g.totalMissing, 0) })
   } catch (err: any) {

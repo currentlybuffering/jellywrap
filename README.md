@@ -4,16 +4,16 @@ Your media. Your server. Free forever.
 
 Open-source Plex alternative built on Jellyfin. Self-hosted, private, and actually yours. No subscription. No price hikes. No lock-in.
 
-**[jellywrap.net](https://jellywrap.net)** | **[Try the cloud version](https://jellywrap.net/#pricing)**
+**[jellywrap.net](https://jellywrap.net)** | **[Try the demo](https://jellywrap.net/getting-started)**
 
 ## Why JellyWrap?
 
 Plex is raising lifetime passes to $750. Jellyfin is free but clunky to set up. JellyWrap gives you:
 
-- **One-click migration** from Plex — watch history, ratings, favorites, all matched by TMDB/TVDB/IMDB IDs
-- **Better browsing UX** — poster walls, continue watching, search, detail views with actual playback
-- **Smart library tools** — duplicate detection, gap finding, subtitle hunting (coming soon)
-- **Social features** — watch together, invite links, family controls (coming soon)
+- **Plex migration** — watch history, ratings, favorites, matched by TMDB/TVDB/IMDB IDs
+- **Better browsing UX** — poster walls, continue watching, search, detail views with playback
+- **Smart library tools** — duplicate detection, gap finding, subtitle hunting
+- **Social features** — watch together rooms, invite links, family controls
 - **Remote access relay** — WireGuard tunnel, no port forwarding needed
 - **Self-hosted or cloud** — run it yourself for free, or let us handle the server
 
@@ -28,56 +28,49 @@ cp .env.example .env
 docker compose up --build
 ```
 
-- Web app: http://localhost:3000
+- Web app: http://localhost:3001
+- Jellyfin: http://localhost:8096
 - Migration API: http://localhost:8080
-- Relay agent: http://localhost:8081
 
-### Self-hosted (manual)
-
-```bash
-# Migration API
-cd apps/migration-api
-npm install
-cp .env.example .env
-npm run dev
-
-# Web app
-cd apps/web
-npm install
-npm run dev
-
-# Relay agent
-cd apps/relay-agent
-go build ./cmd/
-./main
-```
+> **New to Docker?** See the [Getting Started guide](https://jellywrap.net/getting-started) for step-by-step instructions with OS auto-detection.
 
 ### Cloud
 
 Don't want to manage a server? [JellyWrap Cloud](https://jellywrap.net/#pricing) handles migration, hosting, and relay for you. Connect your Jellyfin server and go.
 
-## Migration tool
+## Features
 
-1. Enter your Plex server URL and token
-2. Enter your Jellyfin server URL and credentials
-3. Choose what to migrate (watch history, ratings, favorites)
-4. Click start — items are matched via 3-tier system:
-   - **Tier 1**: Provider IDs (TMDB/TVDB/IMDB) — exact match
-   - **Tier 2**: Title + year — high confidence
-   - **Tier 3**: Fuzzy title — partial match
-5. Review results with confidence scores
+### Plex Migration
 
-## Relay
+Transfer your watch history, ratings, and favorites from Plex to Jellyfin. 3-tier matching system:
+
+1. **Provider IDs** (TMDB/TVDB/IMDB) — exact match
+2. **Title + year** — high confidence
+3. **Fuzzy title** — partial match
+
+Review results with confidence scores before committing.
+
+### Media Browser
+
+Browse your Jellyfin library with poster walls, continue watching, search, and detail views. Playback works directly in the browser.
+
+### Smart Library
+
+- **Duplicate detection** — find and merge duplicate entries in your library
+- **Gap finder** — spot missing seasons/movies in your collection (requires `TMDB_API_KEY`)
+- **Subtitle hunt** — search for subtitles via Gestdown
+
+### Watch Together
+
+Create a room, share the invite link, and watch in sync with friends. Play/pause/seek stays synchronized across all peers.
+
+### Family Controls
+
+Manage Jellyfin users, toggle access policies, and create new accounts — all from one page.
+
+### Relay
 
 The relay agent creates a WireGuard tunnel so you can access your media server from anywhere — no port forwarding needed.
-
-```bash
-# On your VPS
-docker compose up relay-agent
-
-# On your home server
-wg-quick up jellywrap.conf
-```
 
 ## Stack
 
@@ -88,28 +81,41 @@ wg-quick up jellywrap.conf
 | Relay | Go, WireGuard, Echo |
 | Deploy | Docker Compose, Caddy/Traefik |
 
-## Pricing
-
-| Tier | Price | What you get |
-|------|-------|-------------|
-| Self-hosted | Free | Everything — no feature limits |
-| Cloud | $5/mo | Managed migration + relay + hosting |
-| Cloud+ | $10/mo | Full managed Jellyfin + all features |
-
-Self-hosted gets every feature. Cloud is just convenience for people who don't want to run their own server.
-
 ## Roadmap
 
+### Working
+
 - [x] Plex → Jellyfin migration (watch history, ratings, favorites)
-- [x] Media browser with real Jellyfin playback
+- [x] Media browser with Jellyfin playback
+- [x] Duplicate detection
+- [x] Watch together rooms
+- [x] Invite links
+- [x] Family controls
 - [x] WireGuard relay for remote access
-- [ ] Duplicate detection — find and merge duplicate library entries
-- [ ] Gap finding — spot missing seasons/movies in your collection
-- [ ] Subtitle hunting — auto-find subtitles for your library
-- [ ] Watch together — sync playback with friends
-- [ ] Invite links — share your library without sharing credentials
-- [ ] Family controls — per-user content restrictions
-- [ ] Mobile apps
+
+### In progress
+
+- [ ] Gap finder — spot missing seasons/movies (needs TMDB API key setup)
+- [ ] Subtitle hunt — search external subtitle sources
+- [ ] Mobile apps (Tauri desktop apps available)
+
+### Planned
+
+- [ ] One-click Plex token extraction (no manual token lookup)
+- [ ] Reconnect logic for watch together rooms
+- [ ] Parental rating limits in family controls
+- [ ] Playlist migration from Plex
+- [ ] Auto-update mechanism for self-hosted
+
+## Environment variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `JELLYFIN_URL` | No | Default Jellyfin server URL |
+| `MIGRATION_API_URL` | No | Migration API URL (default: `http://localhost:8080`) |
+| `ALLOWED_ORIGINS` | No | CORS origins (default: `http://localhost:3001`) |
+| `TMDB_API_KEY` | No | TMDB API key for gap finder |
+| `JWT_SECRET` | Yes | Secret for signing tokens (change in production!) |
 
 ## License
 

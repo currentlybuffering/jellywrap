@@ -8,6 +8,7 @@ import smartLibraryRouter from './routes/smart-library.js'
 import familyRouter from './routes/family.js'
 import invitesRouter from './routes/invites.js'
 import watchRouter, { setupWatchWSS } from './routes/watch-together.js'
+import cloudRouter from './routes/cloud.js'
 
 const app = express()
 const PORT = parseInt(process.env.PORT || '8080', 10)
@@ -29,6 +30,7 @@ app.use('/library', smartLibraryRouter)
 app.use('/family', familyRouter)
 app.use('/invites', invitesRouter)
 app.use('/watch', watchRouter)
+app.use('/cloud', cloudRouter)
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' })

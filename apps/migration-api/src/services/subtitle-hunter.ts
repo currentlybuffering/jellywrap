@@ -65,27 +65,33 @@ async function searchOpenSubtitles(opts: {
     if (!opts.isMovie && opts.season) params.set('season_number', String(opts.season))
     if (!opts.isMovie && opts.episode) params.set('episode_number', String(opts.episode))
 
-    const res = await fetch(`https://rest.opensubtitles.org/search?${params.toString()}`, {
-      headers: {
-        'User-Agent': 'JellyWrap v0.1.0',
-        'Accept': 'application/json',
-      },
-    })
-    if (!res.ok) return results
-
-    const data = await res.json() as any[]
-    for (const sub of data.slice(0, 10)) {
-      results.push({
-        fileName: sub.SubFileName || sub.MovieReleaseName || 'unknown.srt',
-        language: sub.SubLanguageName || 'Unknown',
-        languageCode: sub.SubLanguageID || 'en',
-        downloadUrl: sub.SubDownloadLink || sub.ZipDownloadLink || '',
-        source: 'OpenSubtitles',
-        score: parseFloat(sub.SubRating || '0') + (sub.SubDownloadsCnt ? Math.min(parseInt(sub.SubDownloadsCnt) / 1000, 2) : 0),
+    const apiKey = process.env.OPENSUBTITLES_API_KEY
+    if (apiKey) {
+      const res = await fetch(`https://api.opensubtitles.com/api/v1/subtitles?${params.toString()}`, {
+        headers: {
+          'Api-Key': apiKey,
+          'User-Agent': 'JellyWrap v0.3.0',
+          'Accept': 'application/json',
+        },
       })
+      if (res.ok) {
+        const data = await res.json() as any
+        for (const sub of (data.data || []).slice(0, 10)) {
+          const attrs = sub.attributes || {}
+          const files = attrs.files || [{}]
+          results.push({
+            fileName: attrs.release_name || attrs.feature_details?.movie_name || 'unknown.srt',
+            language: attrs.language || 'Unknown',
+            languageCode: attrs.language_code || 'en',
+            downloadUrl: files[0]?.file_id ? `https://api.opensubtitles.com/api/v1/download/${files[0].file_id}` : '',
+            source: 'OpenSubtitles',
+            score: parseFloat(String(attrs.ratings) || '0') + (attrs.download_count ? Math.min(attrs.download_count / 1000, 2) : 0),
+          })
+        }
+      }
     }
   } catch {
-    // OpenSubtitles free API is flaky — fail gracefully
+    // OpenSubtitles API can fail — fail gracefully
   }
 
   try {

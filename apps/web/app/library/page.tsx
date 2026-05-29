@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useVault } from '@/lib/store'
-import JellyfinAuthForm from '@/components/jellyfin-auth-form'
 import ItemPicker from '@/components/item-picker'
 import type { DuplicateGroup, SubtitleResult, GapResult } from '../smart-library-types'
 
@@ -18,6 +17,10 @@ export default function SmartLibraryPage() {
   const [subtitleItemName, setSubtitleItemName] = useState('')
   const [subtitles, setSubtitles] = useState<SubtitleResult[]>([])
   const [gaps, setGaps] = useState<GapResult[]>([])
+  const [gapsSearched, setGapsSearched] = useState(false)
+  const [subtitlesSearched, setSubtitlesSearched] = useState(false)
+  const [subtitlesWarning, setSubtitlesWarning] = useState('')
+  const [gapsWarning, setGapsWarning] = useState('')
 
   const authBody = () => ({ jellyfinUrl, jellyfinToken, jellyfinUserId })
 
@@ -33,42 +36,40 @@ export default function SmartLibraryPage() {
 
   const runSubtitles = async () => {
     if (!subtitleItemId) return
-    setLoading(true); setError('')
+    setLoading(true); setError(''); setSubtitlesSearched(true); setSubtitlesWarning('')
     try {
       const res = await fetch(`/api/library/subtitles/${subtitleItemId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(authBody()) })
       const data = await res.json()
       if (!res.ok) { setError(data.error); return }
       setSubtitles(data.subtitles || [])
+      if (data.warning) setSubtitlesWarning(data.warning)
     } catch (err: any) { setError(err.message) } finally { setLoading(false) }
   }
 
   const runGaps = async () => {
-    setLoading(true); setError('')
+    setLoading(true); setError(''); setGapsSearched(true); setGapsWarning('')
     try {
       const res = await fetch('/api/library/gaps', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(authBody()) })
       const data = await res.json()
       if (!res.ok) { setError(data.error); return }
       setGaps(data.gaps || [])
+      if (data.warning) setGapsWarning(data.warning)
     } catch (err: any) { setError(err.message) } finally { setLoading(false) }
   }
 
   return (
-    <main className="min-h-screen bg-vault-950 pt-14">
-      <div className="max-w-5xl mx-auto px-6 py-20">
-        <h1 className="font-display text-4xl font-black mb-2">Smart <span className="text-gold">Library</span></h1>
-        <p className="text-zinc-500 mb-10">Duplicate detection, gap finding, and subtitle hunting. Tools Plex doesn&apos;t have.</p>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl">
+      <h1 className="font-display text-2xl sm:text-3xl font-black mb-1">Smart <span className="text-gold">Library</span></h1>
+      <p className="text-sm text-zinc-500 mb-6">Duplicate detection, gap finding, and subtitle hunting. Tools Plex doesn&apos;t have.</p>
 
-        {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm mb-6">{error}</div>}
+      {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm mb-6">{error}</div>}
 
-        {!connected && <JellyfinAuthForm />}
-
-        {connected && (
-          <div className="space-y-6">
-            <div className="flex gap-2 border-b border-vault-700 pb-px">
-              {(['duplicates', 'subtitles', 'gaps'] as Tab[]).map((t) => (
-                <button key={t} onClick={() => setTab(t)} className={`px-5 py-3 text-sm font-medium transition-all border-b-2 -mb-px ${tab === t ? 'border-gold text-gold' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}>
-                  {t === 'duplicates' ? 'Duplicate Detection' : t === 'subtitles' ? 'Subtitle Hunt' : 'Gap Finder'}
-                </button>
+      <div className="space-y-6">
+        <div className="flex gap-1 border-b border-vault-700/50 pb-px -mb-px">
+        {(['duplicates', 'subtitles', 'gaps'] as Tab[]).map((t) => (
+          <button key={t} onClick={() => setTab(t)} className={`px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px ${tab === t ? 'border-gold text-gold' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}>
+            {t === 'duplicates' ? 'Duplicates' : t === 'subtitles' ? 'Subtitles' : 'Gap Finder'}
+          </button>
               ))}
             </div>
 
@@ -134,7 +135,12 @@ export default function SmartLibraryPage() {
                       </div>
                     ))}
                   </div>
-                ) : !loading && subtitleItemId && <div className="text-center text-zinc-600 py-16">No subtitles found</div>}
+                ) : !loading && subtitlesSearched && subtitleItemId ? (
+  <div className="text-center py-16">
+    <div className="text-zinc-500 mb-2">No subtitles found</div>
+    {subtitlesWarning ? <div className="text-xs text-amber-500">{subtitlesWarning}</div> : <div className="text-xs text-zinc-600">Try a different item or check your server config.</div>}
+  </div>
+) : !loading && <div className="text-center text-zinc-600 py-16">Select an item and click &quot;Find Subtitles&quot;</div>}
               </div>
             )}
 
@@ -166,12 +172,15 @@ export default function SmartLibraryPage() {
                       </div>
                     ))}
                   </div>
-                ) : !loading && <div className="text-center text-zinc-600 py-16">Click &quot;Scan TV Library&quot; to find gaps</div>}
+                ) : !loading && gapsSearched ? (
+  <div className="text-center py-16">
+    <div className="text-zinc-500 mb-2">No gaps found — your TV library is complete!</div>
+    {gapsWarning ? <div className="text-xs text-amber-500">{gapsWarning}</div> : null}
+  </div>
+) : !loading && <div className="text-center text-zinc-600 py-16">Click &quot;Scan TV Library&quot; to find gaps</div>}
               </div>
             )}
-          </div>
-        )}
-      </div>
-    </main>
+    </div>
+  </div>
   )
 }

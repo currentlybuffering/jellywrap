@@ -18,6 +18,7 @@ interface WatchRoom {
 }
 
 const rooms = new Map<string, WatchRoom>()
+const GRACE_PERIOD_MS = 5 * 60 * 1000
 
 export function setupWatchWSS(server: http.Server) {
   const wss = new WebSocketServer({ server, path: '/watch/ws' })
@@ -157,9 +158,12 @@ export function setupWatchWSS(server: http.Server) {
             peerName: peer?.name || 'Anonymous',
             peerCount: room.peers.size,
           })
-          if (room.peers.size === 0) {
-            rooms.delete(currentRoom)
-          }
+      if (room.peers.size === 0) {
+        setTimeout(() => {
+          const r = rooms.get(currentRoom!)
+          if (r && r.peers.size === 0) rooms.delete(currentRoom!)
+        }, GRACE_PERIOD_MS)
+      }
         }
       }
     })

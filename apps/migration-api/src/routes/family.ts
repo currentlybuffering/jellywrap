@@ -75,12 +75,20 @@ router.post('/users/:userId/policy', async (req, res) => {
   try {
     const { url, token } = makeClient(req)
     const { userId } = req.params
-    const policy = req.body.policy
-    if (!policy) { res.status(400).json({ error: 'policy object required' }); return }
+    const policyUpdates = req.body.policy
+    if (!policyUpdates) { res.status(400).json({ error: 'policy object required' }); return }
+
+    const currentRes = await fetch(`${url}/Users/${userId}`, {
+      headers: { 'X-Emby-Token': token, 'Accept': 'application/json' },
+    })
+    if (!currentRes.ok) { res.status(502).json({ error: 'Failed to fetch current user policy' }); return }
+    const currentUser = await currentRes.json() as any
+    const mergedPolicy = { ...(currentUser.Policy || {}), ...policyUpdates }
+
     await fetch(`${url}/Users/${userId}/Policy`, {
       method: 'POST',
       headers: { 'X-Emby-Token': token, 'Content-Type': 'application/json' },
-      body: JSON.stringify(policy),
+      body: JSON.stringify(mergedPolicy),
     })
     res.json({ ok: true })
   } catch (err: any) {

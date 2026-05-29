@@ -1,6 +1,5 @@
 import WaitlistForm from './waitlist-form'
-import PlatformInstall from './platform-install'
-import { ArrowRight, Shield, Zap, Users, Tv, HardDrive, Globe, Check, Apple, Monitor, Terminal } from 'lucide-react'
+import { ArrowRight, Shield, Zap, Users, Tv, HardDrive, Globe, Check, Apple, Terminal, Play, Sparkles, Clock, Search, Heart } from 'lucide-react'
 
 const comparisons = [
   ['Media streaming', 'Free', 'Free'],
@@ -42,8 +41,8 @@ const plans = [
     period: 'forever',
     desc: 'Run it on your own hardware. Every feature, no limits.',
     features: ['Full migration tool', 'Media browser with playback', 'WireGuard relay', 'Smart library tools', 'Docker Compose deploy', 'Community support'],
-    cta: 'View on GitHub',
-    ctaHref: 'https://github.com/currentlybuffering/jellywrap',
+    cta: 'Get started',
+    ctaHref: '/getting-started',
     highlight: false,
   },
   {
@@ -52,8 +51,8 @@ const plans = [
     period: '/mo',
     desc: 'We handle the server. You connect your Jellyfin and go.',
     features: ['Managed migration', 'Managed relay', 'Auto-updates', 'SSL included', 'Email support', 'All features'],
-    cta: 'Join Waitlist',
-    ctaHref: '#waitlist',
+    cta: 'Set up cloud',
+    ctaHref: '/cloud',
     highlight: true,
   },
   {
@@ -62,8 +61,8 @@ const plans = [
     period: '/mo',
     desc: 'Fully managed — we run Jellyfin too. Zero setup required.',
     features: ['Everything in Cloud', 'Managed Jellyfin server', '50GB storage included', 'Priority support', 'Automatic backups', 'Custom domain'],
-    cta: 'Join Waitlist',
-    ctaHref: '#waitlist',
+    cta: 'Set up cloud',
+    ctaHref: '/cloud',
     highlight: false,
   },
 ] as const
@@ -75,6 +74,13 @@ const trustBadges = [
   ['Zero Telemetry', 'No tracking, ever'],
   ['Cross-Platform', 'Mac, Windows, Linux'],
 ] as const
+
+const demoFeatures = [
+  { icon: Play, label: 'Stream anything', desc: 'Browse and play your full library' },
+  { icon: Search, label: 'Smart search', desc: 'Find anything in seconds' },
+  { icon: Clock, label: 'Resume anywhere', desc: 'Pick up where you left off' },
+  { icon: Heart, label: 'Favorites sync', desc: 'Your ratings and watchlist travel with you' },
+]
 
 export default function Home() {
   return (
@@ -104,40 +110,97 @@ export default function Home() {
             </span>
           </h1>
 
-          <p className="text-base sm:text-lg md:text-xl text-zinc-400 max-w-2xl mb-3 sm:mb-4 leading-relaxed animate-fade-in-up delay-300">
+          <p className="text-base sm:text-lg md:text-xl text-zinc-400 max-w-2xl mb-8 sm:mb-10 leading-relaxed animate-fade-in-up delay-300">
             JellyWrap wraps Jellyfin with one-click Plex migration, a polished browser UX,
             and smart library tools. Self-host for free, or let us run the server.
           </p>
-          <p className="text-xs sm:text-sm text-zinc-500 max-w-xl mb-8 sm:mb-10 animate-fade-in-up delay-400">
-            Built on{' '}
-            <a href="https://jellyfin.org" className="text-zinc-400 underline underline-offset-2 hover:text-gold transition-colors">
-              Jellyfin
-            </a>{' '}
-            — the open-source media server. JellyWrap adds everything Plex charges $750 for. Free and open source.
-          </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-10 sm:mb-12 animate-fade-in-up delay-500">
-            <a href="/getting-started" className="btn-gold text-center text-base sm:text-lg px-7 sm:px-8 py-3.5 sm:py-4">
-              Get Started Free
-            </a>
-            <a href="/migrate" className="btn-outline text-center px-6 py-3.5 sm:py-4">
-              Migrate from Plex
-            </a>
+          {/* ===== DEMO-FIRST CTA ===== */}
+          <div className="animate-fade-in-up delay-400 mb-8 sm:mb-10">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4">
+              <a href="/media?demo=true" className="btn-gold text-center text-base sm:text-lg px-7 sm:px-8 py-3.5 sm:py-4 inline-flex items-center justify-center gap-2">
+                <Play className="w-5 h-5" />
+                Try it now — free demo
+              </a>
+        <a href="/getting-started" className="btn-outline text-center px-6 py-3.5 sm:py-4 inline-flex items-center justify-center gap-2">
+          Set up your server
+        <ArrowRight className="w-4 h-4" />
+              </a>
+            </div>
+            <p className="text-xs sm:text-sm text-zinc-500 animate-fade-in-up delay-500">
+              No signup. No install. Browse a real Jellyfin library right now.
+            </p>
           </div>
 
-          <div className="glass rounded-xl p-4 sm:p-5 max-w-lg animate-fade-in-up delay-700">
-            <div className="text-zinc-500 mb-3 flex items-center gap-2 text-xs sm:text-sm">
-              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-400 animate-pulse" />
-              Self-host in 2 minutes — auto-detected for your OS
+          {/* ===== DEMO PREVIEW WINDOW ===== */}
+          <div className="max-w-2xl animate-fade-in-up delay-700">
+            <div className="glass rounded-xl overflow-hidden shadow-[0_0_60px_rgba(232,197,71,0.06)]">
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.04] bg-white/[0.01]">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
+                </div>
+                <span className="text-[11px] text-zinc-600 font-mono ml-2">jellywrap.net/media</span>
+              </div>
+              <div className="p-4 sm:p-5">
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
+                  {[
+                    { title: 'The Matrix', year: 1999, color: 'from-green-900/40 to-vault-800' },
+                    { title: 'Inception', year: 2010, color: 'from-blue-900/40 to-vault-800' },
+                    { title: 'Interstellar', year: 2014, color: 'from-amber-900/40 to-vault-800' },
+                    { title: 'The Dark Knight', year: 2008, color: 'from-slate-700/40 to-vault-800' },
+                    { title: 'Pulp Fiction', year: 1994, color: 'from-orange-900/40 to-vault-800' },
+                  ].map((item) => (
+                    <a key={item.title} href="/media?demo=true" className="group block">
+                      <div className={`aspect-[2/3] rounded-lg bg-gradient-to-br ${item.color} mb-1.5 flex items-end p-2 transition-transform group-hover:scale-[1.03]`}>
+                        <div className="w-full">
+                          <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity mb-1">
+                            <Play className="w-3 h-3 text-white" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-[10px] sm:text-xs text-zinc-400 truncate">{item.title}</div>
+                      <div className="text-[9px] sm:text-[10px] text-zinc-600">{item.year}</div>
+                    </a>
+                  ))}
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                    <span className="text-[11px] text-zinc-500">Live demo · demo.jellyfin.org</span>
+                  </div>
+                  <a href="/media?demo=true" className="text-[11px] text-gold/70 hover:text-gold transition-colors">
+                    Open full screen →
+                  </a>
+                </div>
+              </div>
             </div>
-            <PlatformInstall />
+          </div>
+        </div>
+      </section>
+
+      {/* ===== DEMO FEATURE STRIP ===== */}
+      <section className="relative border-y border-vault-700/50 bg-vault-900/30">
+        <div className="max-w-6xl mx-auto px-5 sm:px-6 py-8 sm:py-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+            {demoFeatures.map(({ icon: Icon, label, desc }) => (
+              <a key={label} href="/media?demo=true" className="group flex items-start gap-3 p-3 rounded-xl hover:bg-white/[0.02] transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-gold/10 border border-gold/20 flex items-center justify-center shrink-0 group-hover:border-gold/40 transition-colors">
+                  <Icon className="w-3.5 h-3.5 text-gold" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium group-hover:text-gold transition-colors">{label}</div>
+                  <div className="text-[11px] text-zinc-600 leading-snug">{desc}</div>
+                </div>
+              </a>
+            ))}
           </div>
         </div>
       </section>
 
       {/* ===== TRUST STRIP ===== */}
-      <section className="relative border-y border-vault-700/50">
-        <div className="absolute inset-0 bg-gradient-to-r from-vault-950 via-vault-900 to-vault-950" />
+      <section className="relative border-b border-vault-700/50">
         <div className="relative max-w-6xl mx-auto px-5 sm:px-6 py-6 sm:py-8">
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-4 sm:gap-8">
             {trustBadges.map(([title, sub]) => (
@@ -150,27 +213,37 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== PLATFORMS ===== */}
-      <section className="max-w-6xl mx-auto px-5 sm:px-6 py-12 sm:py-16">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
-          {[
-            { icon: Apple, label: 'macOS', sub: 'Docker Desktop or Homebrew' },
-            { icon: Monitor, label: 'Windows', sub: 'Docker Desktop or WSL2' },
-            { icon: Terminal, label: 'Linux', sub: 'Docker or native install' },
-          ].map(({ icon: Icon, label, sub }) => (
-            <div key={label} className="flex items-center gap-3 px-5 sm:px-6 py-3.5 sm:py-4 rounded-xl border border-vault-700/50 bg-vault-900/50 w-full sm:w-auto">
-              <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-gold shrink-0" />
-              <div>
-                <div className="font-semibold text-sm">{label}</div>
-                <div className="text-xs text-zinc-500">{sub}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <p className="text-center text-xs text-zinc-600 mt-4">
-          Runs anywhere Docker does. Desktop apps for Mac and Windows coming soon.
-        </p>
-      </section>
+{/* ===== PLATFORMS ===== */}
+<section className="max-w-6xl mx-auto px-5 sm:px-6 py-12 sm:py-16">
+  <div className="text-center mb-8">
+    <h2 className="font-display text-2xl sm:text-3xl font-black tracking-tight mb-2">
+      Available <span className="text-gold">everywhere</span>
+    </h2>
+    <p className="text-sm text-zinc-500">
+      Stream in your browser right now. Desktop apps for offline use. Or self-host with full control.
+    </p>
+  </div>
+
+  <div className="grid sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+    {[
+      { icon: Play, label: 'Browser', sub: 'Stream now — no install', href: '/media?demo=true', cta: 'Try free' },
+      { icon: Apple, label: 'Desktop apps', sub: 'Mac & Windows — offline mode', href: 'https://github.com/currentlybuffering/jellywrap/releases', cta: 'Download' },
+      { icon: Terminal, label: 'Self-host', sub: 'Docker Compose — full control', href: '/getting-started', cta: 'Set up' },
+    ].map(({ icon: Icon, label, sub, href, cta }) => (
+      <a
+        key={label}
+        href={href}
+        className="group flex flex-col items-center text-center p-5 sm:p-6 rounded-xl border border-vault-700/50 bg-vault-900/50 hover:border-gold/20 hover:bg-gold/5 transition-all"
+        {...(href.startsWith('http') ? { target: '_blank', rel: 'noopener' } : {})}
+      >
+        <Icon className="w-6 h-6 text-gold mb-3" />
+        <div className="font-semibold text-sm mb-1">{label}</div>
+        <div className="text-xs text-zinc-500 mb-3">{sub}</div>
+        <span className="text-xs text-gold/70 group-hover:text-gold transition-colors">{cta} →</span>
+      </a>
+    ))}
+  </div>
+</section>
 
       {/* ===== PROBLEM / SOLUTION ===== */}
       <section className="max-w-6xl mx-auto px-5 sm:px-6 py-16 sm:py-24">

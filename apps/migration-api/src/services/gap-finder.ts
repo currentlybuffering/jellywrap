@@ -93,7 +93,10 @@ export async function findGaps(
 }
 
 async function getTmdbSeasonInfo(tmdbId: string): Promise<{ season_number: number; episode_count: number }[]> {
-  const res = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}?api_key=undefined`, {
+  const apiKey = process.env.TMDB_API_KEY
+  if (!apiKey) return []
+
+  const res = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}?api_key=${apiKey}`, {
     headers: { 'Accept': 'application/json' },
   })
   if (res.ok) {
@@ -101,17 +104,6 @@ async function getTmdbSeasonInfo(tmdbId: string): Promise<{ season_number: numbe
     return (data.seasons || []).map((s: any) => ({
       season_number: s.season_number,
       episode_count: s.episode_count,
-    }))
-  }
-
-  const alt = await fetch(`https://api.tvdb.com/series/${tmdbId}`, {
-    headers: { 'Accept': 'application/json' },
-  })
-  if (alt.ok) {
-    const data = await alt.json() as any
-    return (data.data?.seasons || []).map((s: any) => ({
-      season_number: s.number,
-      episode_count: s.episodeCount || 10,
     }))
   }
 

@@ -111,3 +111,47 @@ export interface MigrationItemRow {
   error: string | null
   created_at: string
 }
+
+export interface CloudServerRow {
+  id: string
+  email: string
+  tier: string
+  status: string
+  jellyfin_url: string | null
+  admin_token: string | null
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+  port: number | null
+  storage_gb: number
+  custom_domain: string | null
+  created_at: string
+  updated_at: string
+}
+
+export function createCloudServer(opts: { email: string; tier: string; stripeCustomerId?: string; stripeSubscriptionId?: string }) {
+  const id = uuid()
+  db.prepare(`
+    INSERT INTO cloud_servers (id, email, tier, status, stripe_customer_id, stripe_subscription_id, storage_gb)
+    VALUES (?, ?, ?, 'pending', ?, ?, ?)
+  `).run(id, opts.email.toLowerCase().trim(), opts.tier, opts.stripeCustomerId || null, opts.stripeSubscriptionId || null, opts.tier === 'cloud_plus' ? 50 : 0)
+  return getCloudServer(id)
+}
+
+export function getCloudServer(id: string) {
+  return db.prepare('SELECT * FROM cloud_servers WHERE id = ?').get(id) as CloudServerRow | undefined
+}
+
+export function getCloudServerByEmail(email: string) {
+  return db.prepare('SELECT * FROM cloud_servers WHERE email = ? ORDER BY created_at DESC').all(email.toLowerCase().trim()) as CloudServerRow[]
+}
+
+export function updateCloudServerStatus(id: string, status: string, updates?: Partial<{ jellyfin_url: string; admin_token: string; port: number; custom_domain: string }>) {
+  const sets = ['status = ?', 'updated_at = datetime(\'now\')']
+  const vals: any[] = [status]
+  if (updates?.jellyfin_url) { sets.push('jellyfin_url = ?'); vals.push(updates.jellyfin_url) }
+  if (updates?.admin_token) { sets.push('admin_token = ?'); vals.push(updates.admin_token) }
+  if (updates?.port) { sets.push('port = ?'); vals.push(updates.port) }
+  if (updates?.custom_domain) { sets.push('custom_domain = ?'); vals.push(updates.custom_domain) }
+  vals.push(id)
+  db.prepare(`UPDATE cloud_servers SET ${sets.join(', ')} WHERE id = ?`).run(...vals)
+}

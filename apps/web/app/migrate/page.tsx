@@ -90,7 +90,7 @@ export default function MigratePage() {
 
   const cancelMigration = async () => {
     if (!migration) return
-    await fetch(`/api/migrations/${migration.id}`, { method: 'POST' })
+    await fetch(`/api/migrations/${migration.id}/cancel`, { method: 'POST' })
     if (pollTimer) clearInterval(pollTimer)
   }
 
@@ -122,14 +122,13 @@ export default function MigratePage() {
   const needJellyfinCreds = connected && jellyfinToken ? false : (jellyfinUrl && jellyfinUsername)
 
   return (
-    <main className="min-h-screen bg-vault-950 pt-14">
-      <div className="max-w-3xl mx-auto px-6 py-20">
-        <h1 className="font-display text-4xl font-black mb-2">
-          Plex → JellyWrap <span className="text-gold">Migration</span>
-        </h1>
-        <p className="text-zinc-500 mb-10">
-          Transfer your watch history, ratings, and playlists from Plex to Jellyfin. One click.
-        </p>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-3xl">
+      <h1 className="font-display text-2xl sm:text-3xl font-black mb-1">
+        Plex → JellyWrap <span className="text-gold">Migration</span>
+      </h1>
+      <p className="text-sm text-zinc-500 mb-6">
+        Transfer your watch history, ratings, and playlists from Plex to Jellyfin. One click.
+      </p>
 
         {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm mb-6">{error}</div>}
 
@@ -147,8 +146,13 @@ export default function MigratePage() {
                 </div>
                 <div>
                   <label className="text-xs text-zinc-500 uppercase tracking-widest mb-1 block">Plex Token</label>
-                  <input type="password" value={plexToken} onChange={(e) => setPlexToken(e.target.value)} placeholder="Find at /settings > security" className="input-field" />
-                  <p className="text-xs text-zinc-600 mt-1">We never store your Plex token. It&apos;s hashed and discarded after migration.</p>
+                  <input type="password" value={plexToken} onChange={(e) => setPlexToken(e.target.value)} placeholder="e.g. a1b2c3d4e5f6" className="input-field" />
+                  <p className="text-xs text-zinc-600 mt-1">
+                    We never store your Plex token. It&apos;s hashed and discarded after migration.{' '}
+                    <a href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/" target="_blank" rel="noopener" className="text-gold/70 underline underline-offset-2 hover:text-gold transition-colors">
+                      How to find your token
+                    </a>
+                  </p>
                 </div>
               </div>
             </div>
@@ -261,94 +265,93 @@ export default function MigratePage() {
                 <div>
                   <div className="text-2xl font-mono font-bold text-zinc-500">{migration.total_items}</div>
                   <div className="text-zinc-500 text-xs">Total</div>
-                </div>
-              </div>
-            </div>
+    </div>
+      </div>
+      </div>
+    </div>
+    )}
+
+    {step === 'done' && migration && (
+    <div className="space-y-6">
+      <div className="card">
+        <h2 className="font-semibold mb-4">
+          {migration.status === 'completed' ? (
+            <span className="text-gold">Migration Complete</span>
+          ) : (
+            <span className="text-red-400">Migration {migration.status}</span>
+          )}
+        </h2>
+        <div className="grid grid-cols-3 gap-4 text-center text-sm mb-6">
+          <div>
+            <div className="text-2xl font-mono font-bold text-gold">{migration.migrated_items}</div>
+            <div className="text-zinc-500 text-xs">Migrated</div>
           </div>
-        )}
+          <div>
+            <div className="text-2xl font-mono font-bold text-red-400">{migration.failed_items}</div>
+            <div className="text-zinc-500 text-xs">No Match</div>
+          </div>
+          <div>
+            <div className="text-2xl font-mono font-bold text-zinc-500">{migration.total_items}</div>
+            <div className="text-zinc-500 text-xs">Total</div>
+          </div>
+        </div>
 
-        {step === 'done' && migration && (
-          <div className="space-y-6">
-            <div className="card">
-              <h2 className="font-semibold mb-4">
-                {migration.status === 'completed' ? (
-                  <span className="text-gold">Migration Complete</span>
-                ) : (
-                  <span className="text-red-400">Migration {migration.status}</span>
-                )}
-              </h2>
-              <div className="grid grid-cols-3 gap-4 text-center text-sm mb-6">
-                <div>
-                  <div className="text-2xl font-mono font-bold text-gold">{migration.migrated_items}</div>
-                  <div className="text-zinc-500 text-xs">Migrated</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-mono font-bold text-red-400">{migration.failed_items}</div>
-                  <div className="text-zinc-500 text-xs">No Match</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-mono font-bold text-zinc-500">{migration.total_items}</div>
-                  <div className="text-zinc-500 text-xs">Total</div>
-                </div>
-              </div>
-
-              {items.length > 0 && (
-                <div className="max-h-80 overflow-y-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-vault-600 text-zinc-500">
-                        <th className="text-left py-2">Title</th>
-                        <th className="text-left py-2">Type</th>
-                        <th className="text-left py-2">Match</th>
-                        <th className="text-left py-2">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {items.slice(0, 200).map((item) => (
-                        <tr key={item.id} className="border-b border-vault-700/30">
-                          <td className="py-2 pr-4 text-zinc-300">
-                            {item.plex_title}
-                            {item.plex_year ? <span className="text-zinc-600 ml-1">({item.plex_year})</span> : null}
-                          </td>
-                          <td className="py-2 text-zinc-500 capitalize">{item.plex_type}</td>
-                          <td className="py-2">
-                            {item.match_method ? (
-                              <span className="text-zinc-400">{methodLabel[item.match_method] || item.match_method}</span>
-                            ) : '—'}
-                          </td>
-                          <td className="py-2">
-                            {item.status === 'matched' ? (
-                              <span className="text-green-400">Matched</span>
-                            ) : item.status === 'no_match' ? (
-                              <span className="text-yellow-500">No match</span>
-                            ) : item.status === 'error' ? (
-                              <span className="text-red-400" title={item.error || ''}>Error</span>
-                            ) : (
-                              <span className="text-zinc-600">{item.status}</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {items.length > 200 && (
-                    <p className="text-xs text-zinc-600 text-center py-3">Showing 200 of {items.length} items</p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-4">
-              <a href="/" className="btn-outline flex-1 text-center">Back to Home</a>
-              <button onClick={() => {
-                setStep('connect')
-                setMigration(null)
-                setItems([])
-              }} className="btn-gold flex-1">New Migration</button>
-            </div>
+        {items.length > 0 && (
+          <div className="max-h-80 overflow-y-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-vault-600 text-zinc-500">
+                  <th className="text-left py-2">Title</th>
+                  <th className="text-left py-2">Type</th>
+                  <th className="text-left py-2">Match</th>
+                  <th className="text-left py-2">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.slice(0, 200).map((item) => (
+                  <tr key={item.id} className="border-b border-vault-700/30">
+                    <td className="py-2 pr-4 text-zinc-300">
+                      {item.plex_title}
+                      {item.plex_year ? <span className="text-zinc-600 ml-1">({item.plex_year})</span> : null}
+                    </td>
+                    <td className="py-2 text-zinc-500 capitalize">{item.plex_type}</td>
+                    <td className="py-2">
+                      {item.match_method ? (
+                        <span className="text-zinc-400">{methodLabel[item.match_method] || item.match_method}</span>
+                      ) : '—'}
+                    </td>
+                    <td className="py-2">
+                      {item.status === 'matched' ? (
+                        <span className="text-green-400">Matched</span>
+                      ) : item.status === 'no_match' ? (
+                        <span className="text-yellow-500">No match</span>
+                      ) : item.status === 'error' ? (
+                        <span className="text-red-400" title={item.error || ''}>Error</span>
+                      ) : (
+                        <span className="text-zinc-600">{item.status}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {items.length > 200 && (
+              <p className="text-xs text-zinc-600 text-center py-3">Showing 200 of {items.length} items</p>
+            )}
           </div>
         )}
       </div>
-    </main>
+
+      <div className="flex gap-4">
+        <a href="/" className="btn-outline flex-1 text-center">Back to Home</a>
+        <button onClick={() => {
+          setStep('connect')
+          setMigration(null)
+          setItems([])
+        }} className="btn-gold flex-1">New Migration</button>
+      </div>
+    </div>
+    )}
+  </div>
   )
 }
