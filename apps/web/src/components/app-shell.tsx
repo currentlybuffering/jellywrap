@@ -46,9 +46,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const [demoConnecting, setDemoConnecting] = useState(false)
+  const [demoAttempted, setDemoAttempted] = useState(false)
 
   const handleDemoConnect = async () => {
+    if (demoConnecting || demoAttempted) return
     setDemoConnecting(true)
+    setDemoAttempted(true)
     try {
       let deviceId = localStorage.getItem('jw-device-id') || 'jw-' + crypto.randomUUID()
       localStorage.setItem('jw-device-id', deviceId)
@@ -66,20 +69,26 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       if (data.token && data.userId) {
         useVault.getState().setJellyfinAuth(data.serverUrl || 'https://demo.jellyfin.org/stable', data.token, data.userId)
         useVault.getState().setConnected(true)
-        window.location.reload()
+        const url = new URL(window.location.href)
+        url.searchParams.delete('demo')
+        window.history.replaceState({}, '', url.pathname)
+      } else {
+        setDemoAttempted(false)
       }
-    } catch {}
+    } catch {
+      setDemoAttempted(false)
+    }
     setDemoConnecting(false)
   }
 
   useEffect(() => {
-    if (!connected && typeof window !== 'undefined') {
+    if (!connected && !demoConnecting && !demoAttempted) {
       const params = new URLSearchParams(window.location.search)
       if (params.get('demo') === 'true') {
         handleDemoConnect()
       }
     }
-  }, [connected])
+  }, [connected, demoConnecting, demoAttempted])
 
   if (!connected) {
     return (
