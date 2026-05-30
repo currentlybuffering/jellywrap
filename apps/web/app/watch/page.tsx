@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useVault } from '@/lib/store'
 import ItemPicker from '@/components/item-picker'
+import { AlertCircle } from 'lucide-react'
 
 interface PeerInfo {
   peerId: string
@@ -26,6 +27,7 @@ function formatTime(ticks: number): string {
 
 export default function WatchPage() {
   const { connected, jellyfinUrl, jellyfinToken, jellyfinUserId } = useVault()
+  const isDemo = jellyfinUrl?.includes('demo.jellyfin.org')
   const [displayName, setDisplayName] = useState('')
   const [roomId, setRoomId] = useState('')
   const [roomName, setRoomName] = useState('')
@@ -203,6 +205,16 @@ export default function WatchPage() {
     <div className="p-4 sm:p-6 lg:p-8">
       <h1 className="font-display text-2xl sm:text-3xl font-black mb-1">Watch <span className="text-gold">Together</span></h1>
       <p className="text-sm text-zinc-500 mb-6">Sync playback with friends. No Plex Pass required.</p>
+
+      {isDemo && (
+        <div className="flex items-start gap-3 bg-amber-500/5 border border-amber-500/20 rounded-lg p-4 mb-6">
+          <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+          <div className="text-sm">
+            <span className="text-amber-300 font-medium">Demo mode</span>
+            <span className="text-zinc-400"> — Watch Together requires your own Jellyfin server. The demo server doesn't support direct stream access needed for synced playback.</span>
+          </div>
+        </div>
+      )}
 
         {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm mb-6">{error}</div>}
 

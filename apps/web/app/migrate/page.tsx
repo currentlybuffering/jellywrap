@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useVault } from '@/lib/store'
+import { AlertCircle } from 'lucide-react'
 
 type Step = 'connect' | 'options' | 'running' | 'done'
 type MigrationStatus = 'pending' | 'scanning' | 'matching' | 'migrating' | 'completed' | 'error' | 'cancelled'
@@ -29,6 +30,7 @@ interface MigrationItem {
 
 export default function MigratePage() {
   const { connected, jellyfinUrl: storedUrl, jellyfinToken: storedToken, jellyfinUserId: storedUserId, setPlexAuth, plexUrl: storedPlexUrl, plexToken: storedPlexToken } = useVault()
+  const isDemo = storedUrl?.includes('demo.jellyfin.org')
   const [step, setStep] = useState<Step>('connect')
   const [plexUrl, setPlexUrl] = useState(storedPlexUrl || '')
   const [plexToken, setPlexToken] = useState(storedPlexToken || '')
@@ -132,6 +134,16 @@ export default function MigratePage() {
     <p className="text-xs text-zinc-600 mb-6">
       This migrates your <span className="text-zinc-400">metadata</span> (watch history, ratings, favorites) — your actual media files stay on your server and are already accessible by Jellyfin.
     </p>
+
+    {isDemo && (
+      <div className="flex items-start gap-3 bg-amber-500/5 border border-amber-500/20 rounded-lg p-4 mb-6">
+        <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+        <div className="text-sm">
+          <span className="text-amber-300 font-medium">Demo mode</span>
+          <span className="text-zinc-400"> — Migration requires your own Jellyfin server with admin access. The demo server is read-only and doesn't support writing watch history or ratings.</span>
+        </div>
+      </div>
+    )}
 
         {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm mb-6">{error}</div>}
 
