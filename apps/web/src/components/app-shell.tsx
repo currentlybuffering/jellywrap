@@ -45,6 +45,42 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     setTimeout(() => setShowOnboarding(false), 100)
   }
 
+  const [demoConnecting, setDemoConnecting] = useState(false)
+
+  const handleDemoConnect = async () => {
+    setDemoConnecting(true)
+    try {
+      let deviceId = localStorage.getItem('jw-device-id') || 'jw-' + crypto.randomUUID()
+      localStorage.setItem('jw-device-id', deviceId)
+      const res = await fetch('/api/jellyfin-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serverUrl: 'https://demo.jellyfin.org/stable',
+          username: 'demo',
+          password: '',
+          deviceId,
+        }),
+      })
+      const data = await res.json()
+      if (data.token && data.userId) {
+        useVault.getState().setJellyfinAuth(data.serverUrl || 'https://demo.jellyfin.org/stable', data.token, data.userId)
+        useVault.getState().setConnected(true)
+        window.location.reload()
+      }
+    } catch {}
+    setDemoConnecting(false)
+  }
+
+  useEffect(() => {
+    if (!connected && typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('demo') === 'true') {
+        handleDemoConnect()
+      }
+    }
+  }, [connected])
+
   if (!connected) {
     return (
       <main className="min-h-screen bg-vault-950 flex items-center justify-center px-4">
@@ -55,13 +91,26 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
             <p className="text-sm text-zinc-500 mt-2">Connect to your Jellyfin server to get started</p>
           </div>
-          <JellyfinAuthForm onConnected={() => window.location.reload()} defaultServerUrl={typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === 'true' ? 'https://demo.jellyfin.org/stable' : undefined} defaultUsername={typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === 'true' ? 'demo' : undefined} />
+
+          {demoConnecting ? (
+            <div className="card text-center py-12">
+              <div className="w-10 h-10 border-2 border-gold/30 border-t-gold rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-sm text-zinc-400">Connecting to demo server...</p>
+            </div>
+          ) : (
+            <JellyfinAuthForm onConnected={() => window.location.reload()} />
+          )}
+
           <div className="mt-6 text-center">
             <p className="text-xs text-zinc-600 mb-3">No Jellyfin? Try the demo:</p>
-            <Link href="/media?demo=true" className="text-xs text-gold/70 hover:text-gold transition-colors inline-flex items-center gap-1">
+            <button
+              onClick={handleDemoConnect}
+              disabled={demoConnecting}
+              className="text-xs text-gold/70 hover:text-gold transition-colors inline-flex items-center gap-1 min-h-[36px]"
+            >
               <Sparkles className="w-3 h-3" />
               Launch demo server
-            </Link>
+            </button>
           </div>
         </div>
       </main>

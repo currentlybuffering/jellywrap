@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useVault } from '@/lib/store'
+import { Users } from 'lucide-react'
 
 interface FamilyUser {
   id: string
@@ -25,6 +26,9 @@ export default function FamilyPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(true)
+
+  const isDemo = jellyfinUrl?.includes('demo.jellyfin.org')
 
   const authBody = () => ({ jellyfinUrl, jellyfinToken, jellyfinUserId })
 
@@ -37,7 +41,15 @@ export default function FamilyPage() {
         body: JSON.stringify(authBody()),
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.error); return }
+      if (!res.ok) {
+        if (res.status === 403) {
+          setIsAdmin(false)
+          setUsers([])
+          setLoaded(true)
+          return
+        }
+        setError(data.error); return
+      }
       setUsers(data.users || [])
       setLoaded(true)
     } catch (err: any) { setError(err.message) } finally { setLoading(false) }
@@ -91,11 +103,30 @@ export default function FamilyPage() {
       <h1 className="font-display text-2xl sm:text-3xl font-black mb-1">Family <span className="text-gold">Controls</span></h1>
       <p className="text-sm text-zinc-500 mb-6">Manage users, set restrictions, and control access. Plex charges extra for this.</p>
 
-  {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm mb-6">{error}</div>}
+      {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm mb-6">{error}</div>}
 
-  <div className="space-y-6">
-            <div className="card-glow">
-              <h2 className="font-semibold text-lg mb-4">Add Family Member</h2>
+      {!isAdmin && (
+        <div className="card text-center py-12">
+          <Users className="w-10 h-10 text-gold/40 mx-auto mb-4" />
+          <h2 className="text-lg font-semibold mb-2">Admin access required</h2>
+          <p className="text-sm text-zinc-500 mb-4">
+            {isDemo
+              ? 'The demo server uses a guest account without admin access. Family controls work on your own Jellyfin server.'
+              : 'You need to be logged in as an admin user to manage family controls.'}
+          </p>
+          {isDemo && (
+            <a href="/getting-started" className="btn-gold text-sm">
+              Set up your own server
+            </a>
+          )}
+        </div>
+      )}
+
+      {isAdmin && (
+      <>
+        <div className="space-y-6">
+        <div className="card-glow">
+          <h2 className="font-semibold text-lg mb-4">Add Family Member</h2>
               <div className="flex gap-3">
                 <input type="text" value={newUserName} onChange={(e) => setNewUserName(e.target.value)} placeholder="Username" className="input-field flex-1" />
                 <input type="password" value={newUserPw} onChange={(e) => setNewUserPw(e.target.value)} placeholder="Password (optional)" className="input-field flex-1" />
@@ -173,16 +204,18 @@ export default function FamilyPage() {
               ))}
             </div>
 
-            {!loaded && !loading && connected && (
-              <div className="text-center py-8">
-                <button onClick={loadUsers} className="btn-gold">Load Users</button>
-              </div>
-            )}
+      {!loaded && !loading && connected && isAdmin && (
+        <div className="text-center py-8">
+          <button onClick={loadUsers} className="btn-gold">Load Users</button>
+        </div>
+      )}
 
-            {loaded && users.length === 0 && !loading && (
-              <div className="text-center text-zinc-600 py-16">No users found</div>
-            )}
-  </div>
-</div>
+      {loaded && users.length === 0 && !loading && isAdmin && (
+        <div className="text-center text-zinc-600 py-16">No users found</div>
+      )}
+      </div>
+      </>
+      )}
+    </div>
   )
 }

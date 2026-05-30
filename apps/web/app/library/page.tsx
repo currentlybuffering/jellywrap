@@ -3,12 +3,14 @@
 import { useState } from 'react'
 import { useVault } from '@/lib/store'
 import ItemPicker from '@/components/item-picker'
+import { AlertCircle } from 'lucide-react'
 import type { DuplicateGroup, SubtitleResult, GapResult } from '../smart-library-types'
 
 type Tab = 'duplicates' | 'subtitles' | 'gaps'
 
 export default function SmartLibraryPage() {
   const { connected, jellyfinUrl, jellyfinToken, jellyfinUserId } = useVault()
+  const isDemo = jellyfinUrl?.includes('demo.jellyfin.org')
   const [tab, setTab] = useState<Tab>('duplicates')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -59,8 +61,18 @@ export default function SmartLibraryPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl">
-      <h1 className="font-display text-2xl sm:text-3xl font-black mb-1">Smart <span className="text-gold">Library</span></h1>
-      <p className="text-sm text-zinc-500 mb-6">Duplicate detection, gap finding, and subtitle hunting. Tools Plex doesn&apos;t have.</p>
+    <h1 className="font-display text-2xl sm:text-3xl font-black mb-1">Smart <span className="text-gold">Library</span></h1>
+    <p className="text-sm text-zinc-500 mb-6">Duplicate detection, gap finding, and subtitle hunting. Tools Plex doesn&apos;t have.</p>
+
+    {isDemo && (
+      <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-4 text-amber-400 text-sm mb-6 flex items-start gap-2.5">
+        <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+        <div>
+          <span className="font-medium">Demo mode.</span>{' '}
+          Duplicate detection works on the demo server. Gap Finder and Subtitle Hunt need your own Jellyfin server with a TMDB API key configured.
+        </div>
+      </div>
+    )}
 
       {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm mb-6">{error}</div>}
 

@@ -123,12 +123,15 @@ export default function MigratePage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-3xl">
-      <h1 className="font-display text-2xl sm:text-3xl font-black mb-1">
-        Plex → JellyWrap <span className="text-gold">Migration</span>
-      </h1>
-      <p className="text-sm text-zinc-500 mb-6">
-        Transfer your watch history, ratings, and playlists from Plex to Jellyfin. One click.
-      </p>
+    <h1 className="font-display text-2xl sm:text-3xl font-black mb-1">
+      Plex → JellyWrap <span className="text-gold">Migration</span>
+    </h1>
+    <p className="text-sm text-zinc-500 mb-2">
+      Transfer your watch history, ratings, and favorites from Plex to Jellyfin. One click.
+    </p>
+    <p className="text-xs text-zinc-600 mb-6">
+      This migrates your <span className="text-zinc-400">metadata</span> (watch history, ratings, favorites) — your actual media files stay on your server and are already accessible by Jellyfin.
+    </p>
 
         {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm mb-6">{error}</div>}
 

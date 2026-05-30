@@ -52,6 +52,7 @@ export default function CloudPage() {
   const [server, setServer] = useState<CloudServer | null>(null)
   const [existingServers, setExistingServers] = useState<CloudServer[]>([])
   const [checkedExisting, setCheckedExisting] = useState(false)
+  const [successEmail, setSuccessEmail] = useState('')
 
   const checkExisting = async () => {
     if (!email) return
@@ -88,8 +89,9 @@ export default function CloudPage() {
         return
       }
 
-      setServer(data.server)
-    } catch {
+        setServer(data.server)
+        setSuccessEmail(email)
+      } catch {
       setError('Could not reach server. Try again.')
     } finally {
       setLoading(false)
@@ -122,8 +124,11 @@ export default function CloudPage() {
               This usually takes 1-2 minutes. Check back shortly.
             </p>
           )}
-          <p className="text-xs text-zinc-600 mt-6">
-            Server ID: {server.id}
+          <div className="mt-6 text-sm text-zinc-400">
+            <p>We&apos;ll reach out to <span className="text-white">{successEmail}</span> with next steps.</p>
+          </div>
+          <p className="text-xs text-zinc-600 mt-4">
+            Server ID: {server.id} &middot; Tier: {server.tier === 'cloud_plus' ? 'Cloud+' : 'Cloud'}
           </p>
         </div>
       </div>
@@ -132,13 +137,14 @@ export default function CloudPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-3xl">
-      <h1 className="font-display text-2xl sm:text-3xl font-black mb-1">
-        <Cloud className="w-7 h-7 inline-block text-gold mr-2 -mt-1" />
-        Cloud <span className="text-gold">Hosting</span>
-      </h1>
-      <p className="text-sm text-zinc-500 mb-8">
-        We run the server. You just stream. No Docker, no SSH, no headaches.
-      </p>
+    <h1 className="font-display text-2xl sm:text-3xl font-black mb-1">
+      <Cloud className="w-7 h-7 inline-block text-gold mr-2 -mt-1" />
+      Cloud <span className="text-gold">Hosting</span>
+      <span className="ml-3 text-xs font-mono px-2 py-0.5 bg-amber-500/10 text-amber-400 rounded-full border border-amber-500/20 align-middle">BETA</span>
+    </h1>
+    <p className="text-sm text-zinc-500 mb-8">
+      We run a Jellyfin server for you. No Docker, no SSH, no headaches. Enter your email and we&apos;ll spin one up.
+    </p>
 
       {existingServers.length > 0 && (
         <div className="card mb-6 border-amber-500/20">
@@ -191,11 +197,12 @@ export default function CloudPage() {
         ))}
       </div>
 
-      <form onSubmit={handleSignup} className="card max-w-md">
-        <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-          <Server className="w-4 h-4 text-gold" />
-          Provision your server
-        </h3>
+  <form onSubmit={handleSignup} className="card max-w-md">
+    <h3 className="font-semibold text-white mb-1 flex items-center gap-2">
+      <Server className="w-4 h-4 text-gold" />
+      Provision your server
+    </h3>
+    <p className="text-xs text-zinc-500 mb-4">We&apos;ll email you when it&apos;s ready. Free during beta — no credit card.</p>
 
         <div className="space-y-4">
           <div>
@@ -237,9 +244,9 @@ export default function CloudPage() {
             )}
           </button>
 
-          <p className="text-[10px] text-zinc-600 text-center">
-            Free during beta. No credit card required.
-          </p>
+        <p className="text-[10px] text-zinc-600 text-center">
+          Free during beta. We&apos;ll contact you about billing before launch.
+        </p>
         </div>
       </form>
     </div>
