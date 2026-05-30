@@ -1,4 +1,5 @@
 import WaitlistForm from './waitlist-form'
+import DemoPreview from '@/components/demo-preview'
 import { ArrowRight, Shield, Zap, Users, Tv, HardDrive, Globe, Check, Apple, Terminal, Play, Sparkles, Clock, Search, Heart } from 'lucide-react'
 
 const comparisons = [
@@ -132,51 +133,8 @@ export default function Home() {
             </p>
           </div>
 
-          {/* ===== DEMO PREVIEW WINDOW ===== */}
-          <div className="max-w-2xl animate-fade-in-up delay-700">
-            <div className="glass rounded-xl overflow-hidden shadow-[0_0_60px_rgba(232,197,71,0.06)]">
-              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.04] bg-white/[0.01]">
-                <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
-                </div>
-                <span className="text-[11px] text-zinc-600 font-mono ml-2">jellywrap.net/media</span>
-              </div>
-              <div className="p-4 sm:p-5">
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
-                  {[
-                    { title: 'The Matrix', year: 1999, color: 'from-green-900/40 to-vault-800' },
-                    { title: 'Inception', year: 2010, color: 'from-blue-900/40 to-vault-800' },
-                    { title: 'Interstellar', year: 2014, color: 'from-amber-900/40 to-vault-800' },
-                    { title: 'The Dark Knight', year: 2008, color: 'from-slate-700/40 to-vault-800' },
-                    { title: 'Pulp Fiction', year: 1994, color: 'from-orange-900/40 to-vault-800' },
-                  ].map((item) => (
-                    <a key={item.title} href="/media?demo=true" className="group block">
-                      <div className={`aspect-[2/3] rounded-lg bg-gradient-to-br ${item.color} mb-1.5 flex items-end p-2 transition-transform group-hover:scale-[1.03]`}>
-                        <div className="w-full">
-                          <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity mb-1">
-                            <Play className="w-3 h-3 text-white" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-[10px] sm:text-xs text-zinc-400 truncate">{item.title}</div>
-                      <div className="text-[9px] sm:text-[10px] text-zinc-600">{item.year}</div>
-                    </a>
-                  ))}
-                </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                    <span className="text-[11px] text-zinc-500">Live demo · demo.jellyfin.org</span>
-                  </div>
-                  <a href="/media?demo=true" className="text-[11px] text-gold/70 hover:text-gold transition-colors">
-                    Open full screen →
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
+{/* ===== DEMO PREVIEW WINDOW ===== */}
+<DemoPreview />
         </div>
       </section>
 
